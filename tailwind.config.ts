@@ -52,6 +52,18 @@ export default {
 					DEFAULT: 'hsl(var(--card))',
 					foreground: 'hsl(var(--card-foreground))'
 				},
+				bullish: {
+					DEFAULT: 'hsl(var(--bullish))',
+					foreground: 'hsl(var(--bullish-foreground))'
+				},
+				bearish: {
+					DEFAULT: 'hsl(var(--bearish))',
+					foreground: 'hsl(var(--bearish-foreground))'
+				},
+				neutral: {
+					DEFAULT: 'hsl(var(--neutral))',
+					foreground: 'hsl(var(--neutral-foreground))'
+				},
 				sidebar: {
 					DEFAULT: 'hsl(var(--sidebar-background))',
 					foreground: 'hsl(var(--sidebar-foreground))',

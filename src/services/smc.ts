@@ -52,12 +52,12 @@ export class SMCAnalyzer {
     const lookback = lookbackMap[timeframe] || 5;
 
     if (!candles || candles.length < (lookback * 2 + 10)) {
-      return { error: `Dados insuficientes para uma análise confiável em ${timeframe}.` };
+      return { error: `Insufficient data for reliable analysis on ${timeframe}.` };
     }
 
     const swings = this._findSwingPoints(candles, lookback);
     if (swings.length < 4) {
-      return { error: `Não foi possível identificar topos/fundos suficientes para a análise em ${timeframe}.` };
+      return { error: `Could not identify sufficient highs/lows for analysis on ${timeframe}.` };
     }
 
     const structure = this._findMarketStructure(swings);
@@ -105,7 +105,7 @@ export class SMCAnalyzer {
     const lows = swings.filter(s => s.type === 'low');
     
     if (highs.length < 2 || lows.length < 2) {
-      return { error: "Não há topos/fundos suficientes para determinar a estrutura do mercado." };
+      return { error: "Not enough highs/lows to determine market structure." };
     }
 
     const [lastHigh, prevHigh] = highs.slice(-2);
@@ -264,7 +264,7 @@ export class SMCAnalyzer {
         const riskReward = (targetPrice - entryPrice) / (entryPrice - stopPrice);
         
         return {
-          title: "Plano de Compra (Desconto)",
+          title: "Buy Plan (Discount)",
           entry: entryPrice,
           stop: stopPrice,
           target: targetPrice,
@@ -281,7 +281,7 @@ export class SMCAnalyzer {
         const riskReward = (entryPrice - targetPrice) / (stopPrice - entryPrice);
         
         return {
-          title: "Plano de Venda (Premium)",
+          title: "Sell Plan (Premium)",
           entry: entryPrice,
           stop: stopPrice,
           target: targetPrice,

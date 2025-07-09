@@ -46,7 +46,7 @@ export const ZonesCard: React.FC<ZonesCardProps> = ({
             {zone ? (
               <div className="space-y-1">
                 <p className="text-sm font-mono">{formatPrice(zone.low)}</p>
-                <p className="text-xs text-muted-foreground">até</p>
+                <p className="text-xs text-muted-foreground">to</p>
                 <p className="text-sm font-mono">{formatPrice(zone.high)}</p>
               </div>
             ) : (
@@ -61,13 +61,13 @@ export const ZonesCard: React.FC<ZonesCardProps> = ({
   return (
     <Card className="p-6">
       <h2 className="text-xl font-bold text-foreground mb-4 border-b border-border pb-2">
-        Zonas de Interesse
+        Zones of Interest
       </h2>
       <div className="space-y-3">
-        <ZoneRow label="Zona de Demanda" zone={demandZone} type="bullish" />
-        <ZoneRow label="Zona de Oferta" zone={supplyZone} type="bearish" />
-        <ZoneRow label="FVG Bullish" zone={bullishFVG} type="bullish" />
-        <ZoneRow label="FVG Bearish" zone={bearishFVG} type="bearish" />
+        <ZoneRow label="Demand Zone" zone={demandZone} type="bullish" />
+        <ZoneRow label="Supply Zone" zone={supplyZone} type="bearish" />
+        <ZoneRow label="Bullish FVG" zone={bullishFVG} type="bullish" />
+        <ZoneRow label="Bearish FVG" zone={bearishFVG} type="bearish" />
       </div>
     </Card>
   );

@@ -28,14 +28,14 @@ export const DonateModal: React.FC<DonateModalProps> = ({ isOpen, onClose }) => 
       await navigator.clipboard.writeText(bitcoinAddress);
       setCopied(true);
       toast({
-        title: "Endereço copiado!",
-        description: "O endereço Bitcoin foi copiado para a área de transferência.",
+        title: "Address copied!",
+        description: "Bitcoin address has been copied to clipboard.",
       });
       setTimeout(() => setCopied(false), 2000);
     } catch (err) {
       toast({
-        title: "Erro ao copiar",
-        description: "Não foi possível copiar o endereço. Tente selecionar e copiar manualmente.",
+        title: "Copy error",
+        description: "Could not copy address. Try selecting and copying manually.",
         variant: "destructive",
       });
     }
@@ -47,10 +47,10 @@ export const DonateModal: React.FC<DonateModalProps> = ({ isOpen, onClose }) => 
         <DialogHeader>
           <DialogTitle className="text-2xl font-bold text-primary flex items-center gap-2">
             <Heart className="w-6 h-6 text-red-500" />
-            Apoie o Sir BAP AI
+            Support Sir BAP AI
           </DialogTitle>
           <DialogDescription>
-            Se esta ferramenta te ajudou, considere fazer uma doação em Bitcoin
+            If this tool helped you, consider making a Bitcoin donation
           </DialogDescription>
         </DialogHeader>
 
@@ -60,15 +60,15 @@ export const DonateModal: React.FC<DonateModalProps> = ({ isOpen, onClose }) => 
               <BitcoinIcon className="w-16 h-16 text-primary" />
             </div>
             <p className="text-sm text-muted-foreground">
-              Suas doações ajudam a manter o Sir BAP AI sempre atualizado 
-              e com novas funcionalidades!
+              Your donations help keep Sir BAP AI always updated 
+              and with new features!
             </p>
           </div>
 
           <Card className="p-4 bg-gradient-to-br from-primary/10 to-primary/5 border-primary/30">
             <div className="space-y-3">
               <div className="flex items-center justify-between">
-                <span className="text-sm font-semibold text-foreground">Endereço Bitcoin:</span>
+                <span className="text-sm font-semibold text-foreground">Bitcoin Address:</span>
                 <BitcoinIcon className="w-5 h-5 text-primary" />
               </div>
               
@@ -86,12 +86,12 @@ export const DonateModal: React.FC<DonateModalProps> = ({ isOpen, onClose }) => 
                 {copied ? (
                   <>
                     <Check className="w-4 h-4 mr-2" />
-                    Copiado!
+                    Copied!
                   </>
                 ) : (
                   <>
                     <Copy className="w-4 h-4 mr-2" />
-                    Copiar Endereço
+                    Copy Address
                   </>
                 )}
               </Button>
@@ -100,22 +100,22 @@ export const DonateModal: React.FC<DonateModalProps> = ({ isOpen, onClose }) => 
 
           <div className="text-center space-y-2">
             <p className="text-sm text-muted-foreground">
-              ⚡ Use a rede Bitcoin (não confundir com outras redes)
+              ⚡ Use Bitcoin network (don't confuse with other networks)
             </p>
             <p className="text-xs text-muted-foreground">
-              Qualquer valor é bem-vindo e muito apreciado! 🙏
+              Any amount is welcome and greatly appreciated! 🙏
             </p>
           </div>
 
           <div className="flex gap-2">
             <Button variant="outline" onClick={onClose} className="flex-1">
-              Fechar
+              Close
             </Button>
             <Button 
               onClick={() => window.open(`bitcoin:${bitcoinAddress}`, '_blank')}
               className="flex-1"
             >
-              Abrir Carteira
+              Open Wallet
             </Button>
           </div>
         </div>

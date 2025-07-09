@@ -53,7 +53,7 @@ export const BiasCard: React.FC<BiasCardProps> = ({
         <div className="flex items-center justify-center gap-2">
           <IconComponent className={`w-8 h-8 text-${config.color}`} />
           <h2 className="text-2xl font-bold text-foreground">
-            VIÉS DO MERCADO ({timeframe.toUpperCase()})
+            MARKET BIAS ({timeframe.toUpperCase()})
           </h2>
         </div>
         
@@ -63,19 +63,19 @@ export const BiasCard: React.FC<BiasCardProps> = ({
               {bias}
             </Badge>
             <Badge variant="secondary" className="text-sm">
-              {probability}% probabilidade
+              {probability}% probability
             </Badge>
             <Badge 
               variant={strength === 'FORTE' ? 'default' : strength === 'MODERADO' ? 'secondary' : 'outline'}
               className={`text-sm ${strength === 'FORTE' ? 'bg-primary text-primary-foreground' : ''}`}
             >
-              Força: {strength}
+              Strength: {strength}
             </Badge>
           </div>
           
           {lastEvent && breakLevel && (
             <p className="text-sm text-muted-foreground">
-              Último evento: <span className={`text-${config.color} font-semibold`}>
+              Last event: <span className={`text-${config.color} font-semibold`}>
                 {lastEvent}
               </span> @ {formatPrice(breakLevel)}
             </p>

@@ -16,7 +16,7 @@ export const PriceDisplay: React.FC<PriceDisplayProps> = ({ price, change24h }) 
     <Card className="p-4 bg-gradient-to-r from-card to-background border border-border">
       <div className="flex items-center justify-between">
         <div>
-          <p className="text-sm text-muted-foreground">Preço BTC/USD</p>
+          <p className="text-sm text-muted-foreground">BTC/USD Price</p>
           <p className="text-2xl font-bold text-primary">{formatPrice(price)}</p>
         </div>
         {change24h && (

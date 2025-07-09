@@ -39,12 +39,12 @@ export class BitcoinAPI {
       });
 
       if (!response.ok) {
-        throw new Error(`Falha na API da Hyperliquid (status: ${response.status}). Tente novamente.`);
+        throw new Error(`Hyperliquid API failure (status: ${response.status}). Please try again.`);
       }
       
       const data = await response.json();
       if (!Array.isArray(data) || data.length === 0) {
-        throw new Error("A API não retornou dados de candles válidos.");
+        throw new Error("API did not return valid candle data.");
       }
       
       return data.map((c: any) => ({
@@ -58,7 +58,7 @@ export class BitcoinAPI {
       if (error instanceof Error) {
         throw error;
       }
-      throw new Error('Erro desconhecido ao buscar dados da API');
+      throw new Error('Unknown error while fetching API data');
     }
   }
 }

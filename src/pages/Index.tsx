@@ -39,14 +39,14 @@ const Index = () => {
       
       setAnalysis(result);
       toast({
-        title: "Análise concluída!",
-        description: `Mercado analisado no timeframe ${timeframe.toUpperCase()}`,
+        title: "Analysis completed!",
+        description: `Market analyzed on ${timeframe.toUpperCase()} timeframe`,
       });
     } catch (err) {
       const errorMessage = err instanceof Error ? err.message : 'Erro desconhecido';
       setError(errorMessage);
       toast({
-        title: "Erro na análise",
+        title: "Analysis error",
         description: errorMessage,
         variant: "destructive",
       });
@@ -74,14 +74,14 @@ const Index = () => {
             </h1>
           </div>
           <p className="text-muted-foreground text-lg">
-            Análise de Smart Money Concepts para Bitcoin (BTC)
+            Smart Money Concepts Analysis for Bitcoin (BTC)
           </p>
           <div className="flex justify-center gap-2">
             <Badge variant="outline" className="text-primary border-primary">
               SMC v2.3
             </Badge>
             <Badge variant="secondary">
-              Tempo Real
+              Live Data
             </Badge>
           </div>
         </header>
@@ -92,18 +92,18 @@ const Index = () => {
             <div className="flex items-center gap-4">
               <div className="space-y-2">
                 <label className="text-sm font-medium text-muted-foreground">
-                  Tempo Gráfico
+                  Timeframe
                 </label>
                 <Select value={timeframe} onValueChange={setTimeframe}>
                   <SelectTrigger className="w-40">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="15m">15 Minutos</SelectItem>
-                    <SelectItem value="30m">30 Minutos</SelectItem>
-                    <SelectItem value="1h">1 Hora</SelectItem>
-                    <SelectItem value="4h">4 Horas</SelectItem>
-                    <SelectItem value="1d">Diário</SelectItem>
+                    <SelectItem value="15m">15 Minutes</SelectItem>
+                    <SelectItem value="30m">30 Minutes</SelectItem>
+                    <SelectItem value="1h">1 Hour</SelectItem>
+                    <SelectItem value="4h">4 Hours</SelectItem>
+                    <SelectItem value="1d">Daily</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
@@ -112,10 +112,10 @@ const Index = () => {
                 {loading ? (
                   <>
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Analisando...
+                    Analyzing...
                   </>
                 ) : (
-                  'Atualizar Análise'
+                  'Update Analysis'
                 )}
               </Button>
             </div>
@@ -127,7 +127,7 @@ const Index = () => {
                 onClick={() => setAboutModalOpen(true)}
               >
                 <Info className="w-4 h-4 mr-2" />
-                Sobre
+                About
               </Button>
               <Button 
                 variant="outline" 
@@ -136,7 +136,7 @@ const Index = () => {
                 className="text-primary border-primary hover:bg-primary/10"
               >
                 <Heart className="w-4 h-4 mr-2" />
-                Doar BTC
+                Donate BTC
               </Button>
             </div>
           </div>
@@ -151,9 +151,9 @@ const Index = () => {
         {loading && (
           <Card className="p-8 text-center">
             <Loader2 className="w-8 h-8 mx-auto mb-4 animate-spin text-primary" />
-            <p className="text-primary font-semibold">🧠 Analisando o mercado...</p>
+            <p className="text-primary font-semibold">🧠 Analyzing the market...</p>
             <p className="text-sm text-muted-foreground mt-2">
-              Processando dados do timeframe {timeframe.toUpperCase()}
+              Processing {timeframe.toUpperCase()} timeframe data
             </p>
           </Card>
         )}
@@ -162,7 +162,7 @@ const Index = () => {
         {error && (
           <Card className="p-6 border-destructive/50 bg-destructive/10">
             <div className="text-center">
-              <h3 className="font-semibold text-destructive mb-2">❌ Erro na Análise</h3>
+              <h3 className="font-semibold text-destructive mb-2">❌ Analysis Error</h3>
               <p className="text-sm text-muted-foreground">{error}</p>
               <Button 
                 variant="outline" 
@@ -170,7 +170,7 @@ const Index = () => {
                 onClick={handleAnalyze}
                 className="mt-4"
               >
-                Tentar Novamente
+                Try Again
               </Button>
             </div>
           </Card>
@@ -205,10 +205,10 @@ const Index = () => {
         {/* Footer */}
         <footer className="text-center pt-8 pb-4">
           <p className="text-xs text-muted-foreground">
-            Sir BAP AI - Ferramenta educacional de análise técnica
+            Sir BAP AI - Educational Technical Analysis Tool
           </p>
           <p className="text-xs text-muted-foreground mt-1">
-            ⚠️ Trading envolve riscos. Faça sua própria análise.
+            ⚠️ Trading involves risks. Do your own analysis.
           </p>
         </footer>
 

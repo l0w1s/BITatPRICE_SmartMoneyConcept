@@ -40,7 +40,7 @@ export const TradePlans: React.FC<TradePlansProps> = ({ buyPlan, sellPlan }) => 
             <div className="flex justify-between items-center">
               <span className="text-sm text-muted-foreground flex items-center gap-1">
                 <div className={`w-2 h-2 rounded-full bg-${colorClass}`} />
-                Entrada:
+                Entry:
               </span>
               <span className="font-mono font-bold">{formatPrice(plan.entry)}</span>
             </div>
@@ -48,7 +48,7 @@ export const TradePlans: React.FC<TradePlansProps> = ({ buyPlan, sellPlan }) => 
             <div className="flex justify-between items-center">
               <span className="text-sm text-muted-foreground flex items-center gap-1">
                 <Target className="w-3 h-3" />
-                Alvo:
+                Target:
               </span>
               <span className="font-mono font-bold text-primary">{formatPrice(plan.target)}</span>
             </div>
@@ -69,14 +69,14 @@ export const TradePlans: React.FC<TradePlansProps> = ({ buyPlan, sellPlan }) => 
   if (!buyPlan && !sellPlan) {
     return (
       <Card className="p-6 text-center">
-        <p className="text-muted-foreground">Nenhum plano de trade identificado no momento</p>
+        <p className="text-muted-foreground">No trade plans identified at the moment</p>
       </Card>
     );
   }
 
   return (
     <div className="space-y-4">
-      <h2 className="text-xl font-bold text-foreground">Planos de Trade</h2>
+      <h2 className="text-xl font-bold text-foreground">Trade Plans</h2>
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {buyPlan && <PlanCard plan={buyPlan} type="buy" />}
         {sellPlan && <PlanCard plan={sellPlan} type="sell" />}

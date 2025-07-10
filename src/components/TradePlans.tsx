@@ -9,6 +9,7 @@ interface TradePlan {
   target: number;
   stop: number;
   riskReward: number;
+  explanation: string;
 }
 
 interface TradePlansProps {
@@ -60,6 +61,12 @@ export const TradePlans: React.FC<TradePlansProps> = ({ buyPlan, sellPlan }) => 
               </span>
               <span className="font-mono font-bold text-destructive">{formatPrice(plan.stop)}</span>
             </div>
+          </div>
+          
+          <div className="mt-4 p-3 bg-muted/30 rounded-md border-l-2 border-muted-foreground/30">
+            <p className="text-xs text-muted-foreground leading-relaxed">
+              <span className="font-semibold">Why this trade:</span> {plan.explanation}
+            </p>
           </div>
         </div>
       </Card>

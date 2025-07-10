@@ -17,16 +17,17 @@ export interface TradePlan {
   target: number;
   stop: number;
   riskReward: number;
+  explanation: string;
 }
 
 export interface MarketStructure {
-  bias: 'ALTA' | 'BAIXA' | 'LATERAL';
+  bias: 'BULLISH' | 'BEARISH' | 'SIDEWAYS';
   lastEvent?: string;
   breakLevel?: number;
   majorHigh?: SwingPoint;
   majorLow?: SwingPoint;
   probability: number;
-  strength: 'FRACO' | 'MODERADO' | 'FORTE';
+  strength: 'WEAK' | 'MODERATE' | 'STRONG';
 }
 
 export interface SMCAnalysis extends MarketStructure {
@@ -111,11 +112,11 @@ export class SMCAnalyzer {
     const [lastHigh, prevHigh] = highs.slice(-2);
     const [lastLow, prevLow] = lows.slice(-2);
     
-    // Tendência de Alta - BOS
+    // Bullish Trend - BOS
     if (lastHigh.price > prevHigh.price && lastLow.price > prevLow.price) {
-      const probability = this._calculateProbability('ALTA', 'BOS');
+      const probability = this._calculateProbability('BULLISH', 'BOS');
       return { 
-        bias: 'ALTA', 
+        bias: 'BULLISH', 
         lastEvent: 'BOS', 
         breakLevel: prevHigh.price, 
         majorHigh: lastHigh, 
@@ -125,11 +126,11 @@ export class SMCAnalyzer {
       };
     }
     
-    // Tendência de Baixa - BOS
+    // Bearish Trend - BOS
     if (lastLow.price < prevLow.price && lastHigh.price < prevHigh.price) {
-      const probability = this._calculateProbability('BAIXA', 'BOS');
+      const probability = this._calculateProbability('BEARISH', 'BOS');
       return { 
-        bias: 'BAIXA', 
+        bias: 'BEARISH', 
         lastEvent: 'BOS', 
         breakLevel: prevLow.price, 
         majorHigh: prevHigh, 
@@ -139,11 +140,11 @@ export class SMCAnalyzer {
       };
     }
     
-    // CHoCH para Baixa
+    // CHoCH to Bearish
     if (lastLow.price < prevLow.price && lastHigh.index > prevLow.index) {
-      const probability = this._calculateProbability('BAIXA', 'CHoCH');
+      const probability = this._calculateProbability('BEARISH', 'CHoCH');
       return { 
-        bias: 'BAIXA', 
+        bias: 'BEARISH', 
         lastEvent: 'CHoCH', 
         breakLevel: prevLow.price, 
         majorHigh: lastHigh, 
@@ -153,11 +154,11 @@ export class SMCAnalyzer {
       };
     }
     
-    // CHoCH para Alta
+    // CHoCH to Bullish
     if (lastHigh.price > prevHigh.price && lastLow.index > prevHigh.index) {
-      const probability = this._calculateProbability('ALTA', 'CHoCH');
+      const probability = this._calculateProbability('BULLISH', 'CHoCH');
       return { 
-        bias: 'ALTA', 
+        bias: 'BULLISH', 
         lastEvent: 'CHoCH', 
         breakLevel: prevHigh.price, 
         majorHigh: lastHigh, 
@@ -167,9 +168,9 @@ export class SMCAnalyzer {
       };
     }
     
-    const probability = this._calculateProbability('LATERAL', '');
+    const probability = this._calculateProbability('SIDEWAYS', '');
     return { 
-      bias: 'LATERAL', 
+      bias: 'SIDEWAYS', 
       lastEvent: '', 
       breakLevel: undefined, 
       majorHigh: lastHigh, 
@@ -180,17 +181,17 @@ export class SMCAnalyzer {
   }
 
   private static _calculateProbability(bias: string, event: string): number {
-    // Probabilidades baseadas em backtests históricos
+    // Probabilities based on historical backtests
     if (event === 'BOS') {
-      return bias === 'LATERAL' ? 60 : 87;
+      return bias === 'SIDEWAYS' ? 60 : 87;
     }
     if (event === 'CHoCH') {
       return 74;
     }
-    return 52; // Mercado lateral
+    return 52; // Sideways market
   }
 
-  private static _calculateStrength(probability: number, event: string, swingCount: number): 'FRACO' | 'MODERADO' | 'FORTE' {
+  private static _calculateStrength(probability: number, event: string, swingCount: number): 'WEAK' | 'MODERATE' | 'STRONG' {
     let strengthScore = 0;
     
     // Base score da probabilidade
@@ -206,10 +207,10 @@ export class SMCAnalyzer {
     if (swingCount >= 8) strengthScore += 1;
     else if (swingCount >= 6) strengthScore += 0.5;
     
-    // Classificação final
-    if (strengthScore >= 5) return 'FORTE';
-    if (strengthScore >= 3) return 'MODERADO';
-    return 'FRACO';
+    // Final classification
+    if (strengthScore >= 5) return 'STRONG';
+    if (strengthScore >= 3) return 'MODERATE';
+    return 'WEAK';
   }
 
   private static _findPointsOfInterest(candles: Candle[], structure: MarketStructure) {
@@ -257,35 +258,41 @@ export class SMCAnalyzer {
     const { bias, demandZone, supplyZone, majorHigh, majorLow } = analysis;
     
     if (type === 'buy') {
-      if (bias === 'ALTA' && demandZone && majorHigh) {
+      if (bias === 'BULLISH' && demandZone && majorHigh) {
         const entryPrice = demandZone.high;
         const stopPrice = demandZone.low;
         const targetPrice = majorHigh.price;
         const riskReward = (targetPrice - entryPrice) / (entryPrice - stopPrice);
+        
+        const explanation = `This buy setup formed because we have a ${bias.toLowerCase()} market structure with a confirmed ${analysis.lastEvent || 'trend continuation'}. The entry is positioned at the top of a demand zone in the discount area (below 50% of the range), targeting the previous major high. This represents an institutional buying opportunity where smart money typically accumulates positions.`;
         
         return {
           title: "Buy Plan (Discount)",
           entry: entryPrice,
           stop: stopPrice,
           target: targetPrice,
-          riskReward
+          riskReward,
+          explanation
         };
       }
     }
 
     if (type === 'sell') {
-      if (bias === 'BAIXA' && supplyZone && majorLow) {
+      if (bias === 'BEARISH' && supplyZone && majorLow) {
         const entryPrice = supplyZone.low;
         const stopPrice = supplyZone.high;
         const targetPrice = majorLow.price;
         const riskReward = (entryPrice - targetPrice) / (stopPrice - entryPrice);
+        
+        const explanation = `This sell setup formed because we have a ${bias.toLowerCase()} market structure with a confirmed ${analysis.lastEvent || 'trend continuation'}. The entry is positioned at the bottom of a supply zone in the premium area (above 50% of the range), targeting the previous major low. This represents an institutional selling opportunity where smart money typically distributes positions.`;
         
         return {
           title: "Sell Plan (Premium)",
           entry: entryPrice,
           stop: stopPrice,
           target: targetPrice,
-          riskReward
+          riskReward,
+          explanation
         };
       }
     }

@@ -4,12 +4,12 @@ import { Badge } from '@/components/ui/badge';
 import { TrendingUp, TrendingDown, ArrowRight } from 'lucide-react';
 
 interface BiasCardProps {
-  bias: 'ALTA' | 'BAIXA' | 'LATERAL';
+  bias: 'BULLISH' | 'BEARISH' | 'SIDEWAYS';
   lastEvent?: string;
   breakLevel?: number;
   timeframe: string;
   probability: number;
-  strength: 'FRACO' | 'MODERADO' | 'FORTE';
+  strength: 'WEAK' | 'MODERATE' | 'STRONG';
 }
 
 export const BiasCard: React.FC<BiasCardProps> = ({ 
@@ -24,19 +24,19 @@ export const BiasCard: React.FC<BiasCardProps> = ({
     new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(price);
 
   const biasConfig = {
-    ALTA: {
+    BULLISH: {
       color: 'bullish',
       icon: TrendingUp,
       gradient: 'bg-gradient-to-br from-bullish/20 to-bullish/5',
       border: 'border-bullish/50'
     },
-    BAIXA: {
+    BEARISH: {
       color: 'bearish',
       icon: TrendingDown,
       gradient: 'bg-gradient-to-br from-bearish/20 to-bearish/5',
       border: 'border-bearish/50'
     },
-    LATERAL: {
+    SIDEWAYS: {
       color: 'neutral',
       icon: ArrowRight,
       gradient: 'bg-gradient-to-br from-neutral/20 to-neutral/5',
@@ -66,8 +66,8 @@ export const BiasCard: React.FC<BiasCardProps> = ({
               {probability}% probability
             </Badge>
             <Badge 
-              variant={strength === 'FORTE' ? 'default' : strength === 'MODERADO' ? 'secondary' : 'outline'}
-              className={`text-sm ${strength === 'FORTE' ? 'bg-primary text-primary-foreground' : ''}`}
+              variant={strength === 'STRONG' ? 'default' : strength === 'MODERATE' ? 'secondary' : 'outline'}
+              className={`text-sm ${strength === 'STRONG' ? 'bg-primary text-primary-foreground' : ''}`}
             >
               Strength: {strength}
             </Badge>

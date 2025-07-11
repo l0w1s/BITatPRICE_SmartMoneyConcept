@@ -13,17 +13,16 @@ export const PriceDisplay: React.FC<PriceDisplayProps> = ({ price, change24h }) 
   const isPositive = change24h && change24h > 0;
 
   return (
-    <Card className="p-4 bg-gradient-to-r from-card to-background border border-border">
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-sm text-muted-foreground">BTC/USD Price</p>
-          <p className="text-2xl font-bold text-primary">{formatPrice(price)}</p>
-        </div>
+    <Card className="p-8 bg-gradient-to-r from-primary/10 to-primary/5 border-2 border-primary/20">
+      <div className="text-center space-y-2">
+        <p className="text-sm font-medium text-muted-foreground">Current BTC/USD Price</p>
+        <p className="text-4xl md:text-5xl font-bold text-primary bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
+          {formatPrice(price)}
+        </p>
         {change24h && (
-          <div className={`text-right ${isPositive ? 'text-bullish' : 'text-bearish'}`}>
-            <p className="text-sm">24h</p>
+          <div className={`${isPositive ? 'text-bullish' : 'text-bearish'}`}>
             <p className="text-lg font-semibold">
-              {isPositive ? '+' : ''}{change24h.toFixed(2)}%
+              24h: {isPositive ? '+' : ''}{change24h.toFixed(2)}%
             </p>
           </div>
         )}

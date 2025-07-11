@@ -86,16 +86,21 @@ const Index = () => {
           </div>
         </header>
 
+        {/* Price Display */}
+        {analysis && (
+          <PriceDisplay price={analysis.currentPrice} />
+        )}
+
         {/* Controls */}
         <Card className="p-6 bg-gradient-to-r from-card to-background border border-border">
-          <div className="flex flex-col md:flex-row items-center justify-between gap-4">
-            <div className="flex items-center gap-4">
-              <div className="space-y-2">
+          <div className="flex flex-col items-center justify-center gap-6">
+            <div className="flex flex-col md:flex-row items-center gap-6">
+              <div className="text-center space-y-2">
                 <label className="text-sm font-medium text-muted-foreground">
-                  Timeframe
+                  Select Timeframe
                 </label>
                 <Select value={timeframe} onValueChange={setTimeframe}>
-                  <SelectTrigger className="w-40">
+                  <SelectTrigger className="w-48">
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
@@ -108,44 +113,24 @@ const Index = () => {
                 </Select>
               </div>
               
-              <Button onClick={handleAnalyze} disabled={loading} className="mt-6">
+              <Button onClick={handleAnalyze} disabled={loading} size="lg" className="px-8">
                 {loading ? (
                   <>
                     <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Analyzing...
+                    Analyzing Market...
                   </>
                 ) : (
                   'Update Analysis'
                 )}
               </Button>
             </div>
-
-            <div className="flex gap-2">
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={() => setAboutModalOpen(true)}
-              >
-                <Info className="w-4 h-4 mr-2" />
-                About
-              </Button>
-              <Button 
-                variant="outline" 
-                size="sm"
-                onClick={() => setDonateModalOpen(true)}
-                className="text-primary border-primary hover:bg-primary/10"
-              >
-                <Heart className="w-4 h-4 mr-2" />
-                Donate BTC
-              </Button>
-            </div>
+            
+            <p className="text-xs text-muted-foreground text-center">
+              📊 Real-time data powered by <span className="font-semibold">Hyperliquid</span>
+            </p>
           </div>
         </Card>
 
-        {/* Price Display */}
-        {analysis && (
-          <PriceDisplay price={analysis.currentPrice} />
-        )}
 
         {/* Loading State */}
         {loading && (
@@ -203,13 +188,34 @@ const Index = () => {
         )}
 
         {/* Footer */}
-        <footer className="text-center pt-8 pb-4">
-          <p className="text-xs text-muted-foreground">
-            Sir BAP AI - Educational Technical Analysis Tool
-          </p>
-          <p className="text-xs text-muted-foreground mt-1">
-            ⚠️ Trading involves risks. Do your own analysis.
-          </p>
+        <footer className="text-center pt-8 pb-4 space-y-4">
+          <div className="flex justify-center gap-4">
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => setAboutModalOpen(true)}
+            >
+              <Info className="w-4 h-4 mr-2" />
+              About
+            </Button>
+            <Button 
+              variant="outline" 
+              size="sm"
+              onClick={() => setDonateModalOpen(true)}
+              className="text-primary border-primary hover:bg-primary/10"
+            >
+              <Heart className="w-4 h-4 mr-2" />
+              Donate BTC
+            </Button>
+          </div>
+          <div className="space-y-1">
+            <p className="text-xs text-muted-foreground">
+              Sir BAP AI - Educational Technical Analysis Tool
+            </p>
+            <p className="text-xs text-muted-foreground">
+              ⚠️ Trading involves risks. Do your own analysis.
+            </p>
+          </div>
         </footer>
 
         {/* Modals */}

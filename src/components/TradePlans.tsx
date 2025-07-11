@@ -10,14 +10,16 @@ interface TradePlan {
   stop: number;
   riskReward: number;
   explanation: string;
+  strength: 'STRONG' | 'MODERATE' | 'WEAK';
+  age: 'FRESH' | 'RECENT' | 'OLD';
 }
 
 interface TradePlansProps {
-  buyPlan?: TradePlan;
-  sellPlan?: TradePlan;
+  buyPlans: TradePlan[];
+  sellPlans: TradePlan[];
 }
 
-export const TradePlans: React.FC<TradePlansProps> = ({ buyPlan, sellPlan }) => {
+export const TradePlans: React.FC<TradePlansProps> = ({ buyPlans, sellPlans }) => {
   const formatPrice = (price: number) => 
     new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(price);
 
@@ -26,15 +28,41 @@ export const TradePlans: React.FC<TradePlansProps> = ({ buyPlan, sellPlan }) => 
     const colorClass = isBuy ? 'bullish' : 'bearish';
     const Icon = isBuy ? TrendingUp : TrendingDown;
 
+    const getStrengthEmoji = (strength: string) => {
+      switch(strength) {
+        case 'STRONG': return '🔥';
+        case 'MODERATE': return '⚡';
+        case 'WEAK': return '📊';
+        default: return '';
+      }
+    };
+
+    const getAgeEmoji = (age: string) => {
+      switch(age) {
+        case 'FRESH': return '🆕';
+        case 'RECENT': return '📅';
+        case 'OLD': return '⏰';
+        default: return '';
+      }
+    };
+
     return (
       <Card className={`p-4 border-2 border-${colorClass}/30 bg-gradient-to-br from-${colorClass}/10 to-${colorClass}/5`}>
         <div className="space-y-4">
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-2 flex-wrap">
             <Icon className={`w-5 h-5 text-${colorClass}`} />
             <h3 className={`font-semibold text-${colorClass}`}>{plan.title}</h3>
-            <Badge variant="secondary" className="ml-auto" title="Risk/Reward Ratio - How much profit potential vs risk">
-              R/R: {plan.riskReward.toFixed(1)}
-            </Badge>
+            <div className="flex gap-1 ml-auto">
+              <Badge variant="outline" className="text-xs" title={`Strength: ${plan.strength}`}>
+                {getStrengthEmoji(plan.strength)} {plan.strength}
+              </Badge>
+              <Badge variant="secondary" className="text-xs" title={`Age: ${plan.age}`}>
+                {getAgeEmoji(plan.age)} {plan.age}
+              </Badge>
+              <Badge variant="secondary" className="text-xs" title="Risk/Reward Ratio">
+                R/R: {plan.riskReward.toFixed(1)}
+              </Badge>
+            </div>
           </div>
           
           <div className="space-y-3">
@@ -73,7 +101,7 @@ export const TradePlans: React.FC<TradePlansProps> = ({ buyPlan, sellPlan }) => 
     );
   };
 
-  if (!buyPlan && !sellPlan) {
+  if (buyPlans.length === 0 && sellPlans.length === 0) {
     return (
       <Card className="p-6 text-center">
         <p className="text-muted-foreground">No trade plans identified at the moment</p>
@@ -86,12 +114,16 @@ export const TradePlans: React.FC<TradePlansProps> = ({ buyPlan, sellPlan }) => 
       <div className="flex items-center justify-between">
         <h2 className="text-xl font-bold text-foreground">Trade Plans</h2>
         <div className="text-xs text-muted-foreground bg-muted/30 px-2 py-1 rounded">
-          💡 R/R = Risk/Reward Ratio (Profit potential vs. Risk taken)
+          💡 Multiple plans ranked by strength • R/R = Risk/Reward Ratio
         </div>
       </div>
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-        {buyPlan && <PlanCard plan={buyPlan} type="buy" />}
-        {sellPlan && <PlanCard plan={sellPlan} type="sell" />}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {buyPlans.map((plan, index) => (
+          <PlanCard key={`buy-${index}`} plan={plan} type="buy" />
+        ))}
+        {sellPlans.map((plan, index) => (
+          <PlanCard key={`sell-${index}`} plan={plan} type="sell" />
+        ))}
       </div>
     </div>
   );

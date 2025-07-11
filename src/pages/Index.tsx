@@ -174,15 +174,15 @@ const Index = () => {
             />
 
             <TradePlans
-              buyPlan={analysis.buyPlan}
-              sellPlan={analysis.sellPlan}
+              buyPlans={analysis.buyPlans}
+              sellPlans={analysis.sellPlans}
             />
 
             <ZonesCard
-              demandZone={analysis.demandZone}
-              supplyZone={analysis.supplyZone}
-              bullishFVG={analysis.bullishFVG}
-              bearishFVG={analysis.bearishFVG}
+              demandZones={analysis.demandZones}
+              supplyZones={analysis.supplyZones}
+              bullishFVGs={analysis.bullishFVGs}
+              bearishFVGs={analysis.bearishFVGs}
             />
           </div>
         )}

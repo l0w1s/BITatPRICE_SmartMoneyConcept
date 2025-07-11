@@ -2,72 +2,126 @@ import React from 'react';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
 
-interface Zone {
+interface EnhancedZone {
   low: number;
   high: number;
+  strength: 'STRONG' | 'MODERATE' | 'WEAK';
+  age: 'FRESH' | 'RECENT' | 'OLD';
+  distance: number;
+  tested: boolean;
 }
 
 interface ZonesCardProps {
-  demandZone?: Zone;
-  supplyZone?: Zone;
-  bullishFVG?: Zone;
-  bearishFVG?: Zone;
+  demandZones: EnhancedZone[];
+  supplyZones: EnhancedZone[];
+  bullishFVGs: EnhancedZone[];
+  bearishFVGs: EnhancedZone[];
 }
 
 export const ZonesCard: React.FC<ZonesCardProps> = ({
-  demandZone,
-  supplyZone,
-  bullishFVG,
-  bearishFVG
+  demandZones,
+  supplyZones,
+  bullishFVGs,
+  bearishFVGs
 }) => {
   const formatPrice = (price: number) => 
     new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(price);
 
-  const ZoneRow = ({ 
-    label, 
-    zone, 
+  const getStrengthEmoji = (strength: string) => {
+    switch(strength) {
+      case 'STRONG': return '🔥';
+      case 'MODERATE': return '⚡';
+      case 'WEAK': return '📊';
+      default: return '';
+    }
+  };
+
+  const getAgeEmoji = (age: string) => {
+    switch(age) {
+      case 'FRESH': return '🆕';
+      case 'RECENT': return '📅';
+      case 'OLD': return '⏰';
+      default: return '';
+    }
+  };
+
+  const ZoneSection = ({ 
+    title, 
+    zones, 
     type 
   }: { 
-    label: string; 
-    zone?: Zone; 
+    title: string; 
+    zones: EnhancedZone[]; 
     type: 'bullish' | 'bearish' 
   }) => {
     const colorClass = type === 'bullish' ? 'bullish' : 'bearish';
     
-    return (
-      <div className={`p-3 rounded-lg border-l-4 border-${colorClass}/50 bg-${colorClass}/5`}>
-        <div className="flex justify-between items-center">
+    if (zones.length === 0) {
+      return (
+        <div className={`p-3 rounded-lg border-l-4 border-${colorClass}/30 bg-${colorClass}/5`}>
           <div className="flex items-center gap-2">
-            <Badge variant="outline" className={`border-${colorClass} text-${colorClass}`}>
-              {label}
+            <Badge variant="outline" className={`border-${colorClass}/50 text-${colorClass}/70`}>
+              {title}
             </Badge>
-          </div>
-          <div className="text-right">
-            {zone ? (
-              <div className="space-y-1">
-                <p className="text-sm font-mono">{formatPrice(zone.low)}</p>
-                <p className="text-xs text-muted-foreground">to</p>
-                <p className="text-sm font-mono">{formatPrice(zone.high)}</p>
-              </div>
-            ) : (
-              <p className="text-sm text-muted-foreground">N/A</p>
-            )}
+            <span className="text-sm text-muted-foreground">No zones identified</span>
           </div>
         </div>
+      );
+    }
+
+    return (
+      <div className="space-y-2">
+        <h3 className={`text-sm font-semibold text-${colorClass} flex items-center gap-2`}>
+          <Badge variant="outline" className={`border-${colorClass} text-${colorClass}`}>
+            {title}
+          </Badge>
+        </h3>
+        {zones.map((zone, index) => (
+          <div key={index} className={`p-3 rounded-lg border-l-4 border-${colorClass}/50 bg-${colorClass}/5`}>
+            <div className="space-y-2">
+              <div className="flex justify-between items-center">
+                <div className="flex gap-1">
+                  <Badge variant="outline" className="text-xs" title={`Strength: ${zone.strength}`}>
+                    {getStrengthEmoji(zone.strength)} {zone.strength}
+                  </Badge>
+                  <Badge variant="secondary" className="text-xs" title={`Age: ${zone.age}`}>
+                    {getAgeEmoji(zone.age)} {zone.age}
+                  </Badge>
+                  <Badge variant={zone.tested ? "destructive" : "default"} className="text-xs">
+                    {zone.tested ? "⚠️ TESTED" : "✅ UNTESTED"}
+                  </Badge>
+                </div>
+                <div className="text-right">
+                  <div className="space-y-1">
+                    <p className="text-sm font-mono">{formatPrice(zone.low)}</p>
+                    <p className="text-xs text-muted-foreground">to</p>
+                    <p className="text-sm font-mono">{formatPrice(zone.high)}</p>
+                  </div>
+                </div>
+              </div>
+              <div className="text-xs text-muted-foreground">
+                Distance: {zone.distance.toFixed(1)}% from current price
+              </div>
+            </div>
+          </div>
+        ))}
       </div>
     );
   };
 
   return (
     <Card className="p-6">
-      <h2 className="text-xl font-bold text-foreground mb-4 border-b border-border pb-2">
-        Zones of Interest
-      </h2>
-      <div className="space-y-3">
-        <ZoneRow label="Demand Zone" zone={demandZone} type="bullish" />
-        <ZoneRow label="Supply Zone" zone={supplyZone} type="bearish" />
-        <ZoneRow label="Bullish FVG" zone={bullishFVG} type="bullish" />
-        <ZoneRow label="Bearish FVG" zone={bearishFVG} type="bearish" />
+      <div className="flex items-center justify-between mb-4 border-b border-border pb-2">
+        <h2 className="text-xl font-bold text-foreground">Zones of Interest</h2>
+        <div className="text-xs text-muted-foreground bg-muted/30 px-2 py-1 rounded">
+          📍 Multiple zones ranked by strength and proximity
+        </div>
+      </div>
+      <div className="space-y-4">
+        <ZoneSection title="Demand Zones" zones={demandZones} type="bullish" />
+        <ZoneSection title="Supply Zones" zones={supplyZones} type="bearish" />
+        <ZoneSection title="Bullish FVGs" zones={bullishFVGs} type="bullish" />
+        <ZoneSection title="Bearish FVGs" zones={bearishFVGs} type="bearish" />
       </div>
     </Card>
   );

@@ -11,6 +11,14 @@ export interface Zone {
   high: number;
 }
 
+export interface EnhancedZone extends Zone {
+  strength: 'STRONG' | 'MODERATE' | 'WEAK';
+  age: 'FRESH' | 'RECENT' | 'OLD';
+  distance: number;
+  tested: boolean;
+  formationIndex: number;
+}
+
 export interface TradePlan {
   title: string;
   entry: number;
@@ -18,6 +26,8 @@ export interface TradePlan {
   stop: number;
   riskReward: number;
   explanation: string;
+  strength: 'STRONG' | 'MODERATE' | 'WEAK';
+  age: 'FRESH' | 'RECENT' | 'OLD';
 }
 
 export interface MarketStructure {
@@ -33,12 +43,12 @@ export interface MarketStructure {
 export interface SMCAnalysis extends MarketStructure {
   timeframe: string;
   currentPrice: number;
-  buyPlan?: TradePlan;
-  sellPlan?: TradePlan;
-  demandZone?: Zone;
-  supplyZone?: Zone;
-  bullishFVG?: Zone;
-  bearishFVG?: Zone;
+  buyPlans: TradePlan[];
+  sellPlans: TradePlan[];
+  demandZones: EnhancedZone[];
+  supplyZones: EnhancedZone[];
+  bullishFVGs: EnhancedZone[];
+  bearishFVGs: EnhancedZone[];
 }
 
 export class SMCAnalyzer {
@@ -66,17 +76,23 @@ export class SMCAnalyzer {
       return structure;
     }
     
-    const pois = this._findPointsOfInterest(candles, structure);
+    const currentPrice = candles[candles.length - 1].c;
+    const pois = this._findEnhancedPointsOfInterest(candles, structure, currentPrice);
     
     const analysis: SMCAnalysis = {
       ...structure,
-      ...pois,
       timeframe,
-      currentPrice: candles[candles.length - 1].c
+      currentPrice,
+      demandZones: pois.demandZones,
+      supplyZones: pois.supplyZones,
+      bullishFVGs: pois.bullishFVGs,
+      bearishFVGs: pois.bearishFVGs,
+      buyPlans: [],
+      sellPlans: []
     };
     
-    analysis.buyPlan = this._createTradePlan(analysis, 'buy');
-    analysis.sellPlan = this._createTradePlan(analysis, 'sell');
+    analysis.buyPlans = this._createMultipleTradePlans(analysis, 'buy');
+    analysis.sellPlans = this._createMultipleTradePlans(analysis, 'sell');
     
     return analysis;
   }
@@ -213,90 +229,254 @@ export class SMCAnalyzer {
     return 'WEAK';
   }
 
-  private static _findPointsOfInterest(candles: Candle[], structure: MarketStructure) {
+  private static _findEnhancedPointsOfInterest(candles: Candle[], structure: MarketStructure, currentPrice: number) {
     const { majorHigh, majorLow } = structure;
-    if (!majorHigh || !majorLow) return {};
+    if (!majorHigh || !majorLow) return { demandZones: [], supplyZones: [], bullishFVGs: [], bearishFVGs: [] };
     
     const rangeStart = Math.min(majorLow.price, majorHigh.price);
     const rangeEnd = Math.max(majorLow.price, majorHigh.price);
     const fib50 = rangeStart + (rangeEnd - rangeStart) * 0.5;
-
-    let demandZone: Zone | undefined = undefined;
-    let supplyZone: Zone | undefined = undefined;
-    let bullishFVG: Zone | undefined = undefined;
-    let bearishFVG: Zone | undefined = undefined;
     
-    const startIndex = Math.min(majorLow.index, majorHigh.index);
-    const endIndex = Math.max(majorLow.index, majorHigh.index);
-
-    for (let i = endIndex - 1; i > startIndex; i--) {
+    const demandZones: EnhancedZone[] = [];
+    const supplyZones: EnhancedZone[] = [];
+    const bullishFVGs: EnhancedZone[] = [];
+    const bearishFVGs: EnhancedZone[] = [];
+    
+    // Expandir range de busca para incluir mais dados históricos
+    const searchRange = Math.min(candles.length - 1, 100);
+    const startSearch = Math.max(0, candles.length - searchRange);
+    
+    for (let i = startSearch; i < candles.length - 1; i++) {
       const candle = candles[i];
-      const prevCandle = candles[i - 1];
-      const nextCandle = candles[i + 1];
-
-      if (candle.h < fib50) { // Zona de Desconto
-        if (!demandZone && candle.c < candle.o) {
-          demandZone = { low: candle.l, high: candle.h };
-        }
-        if (!bullishFVG && prevCandle && nextCandle && prevCandle.h < nextCandle.l) {
-          bullishFVG = { low: prevCandle.h, high: nextCandle.l };
-        }
-      } else if (candle.l > fib50) { // Zona Premium
-        if (!supplyZone && candle.c > candle.o) {
-          supplyZone = { low: candle.l, high: candle.h };
-        }
-        if (!bearishFVG && prevCandle && nextCandle && prevCandle.l > nextCandle.h) {
-          bearishFVG = { low: nextCandle.h, high: prevCandle.l };
-        }
+      const prevCandle = i > 0 ? candles[i - 1] : null;
+      const nextCandle = i < candles.length - 1 ? candles[i + 1] : null;
+      
+      // Zonas de Demanda (Discount Area)
+      if (candle.h < fib50 && candle.c < candle.o) {
+        const zone: EnhancedZone = {
+          low: candle.l,
+          high: candle.h,
+          strength: this._calculateZoneStrength(candle, currentPrice, candles, i),
+          age: this._calculateAge(i, candles.length),
+          distance: Math.abs(currentPrice - (candle.h + candle.l) / 2) / currentPrice * 100,
+          tested: this._isZoneTested(candle, candles, i),
+          formationIndex: i
+        };
+        demandZones.push(zone);
+      }
+      
+      // Zonas de Supply (Premium Area)
+      if (candle.l > fib50 && candle.c > candle.o) {
+        const zone: EnhancedZone = {
+          low: candle.l,
+          high: candle.h,
+          strength: this._calculateZoneStrength(candle, currentPrice, candles, i),
+          age: this._calculateAge(i, candles.length),
+          distance: Math.abs(currentPrice - (candle.h + candle.l) / 2) / currentPrice * 100,
+          tested: this._isZoneTested(candle, candles, i),
+          formationIndex: i
+        };
+        supplyZones.push(zone);
+      }
+      
+      // Bullish FVGs
+      if (prevCandle && nextCandle && prevCandle.h < nextCandle.l) {
+        const zone: EnhancedZone = {
+          low: prevCandle.h,
+          high: nextCandle.l,
+          strength: this._calculateFVGStrength(prevCandle.h, nextCandle.l, currentPrice),
+          age: this._calculateAge(i, candles.length),
+          distance: Math.abs(currentPrice - (prevCandle.h + nextCandle.l) / 2) / currentPrice * 100,
+          tested: this._isFVGTested(prevCandle.h, nextCandle.l, candles, i),
+          formationIndex: i
+        };
+        bullishFVGs.push(zone);
+      }
+      
+      // Bearish FVGs
+      if (prevCandle && nextCandle && prevCandle.l > nextCandle.h) {
+        const zone: EnhancedZone = {
+          low: nextCandle.h,
+          high: prevCandle.l,
+          strength: this._calculateFVGStrength(nextCandle.h, prevCandle.l, currentPrice),
+          age: this._calculateAge(i, candles.length),
+          distance: Math.abs(currentPrice - (nextCandle.h + prevCandle.l) / 2) / currentPrice * 100,
+          tested: this._isFVGTested(nextCandle.h, prevCandle.l, candles, i),
+          formationIndex: i
+        };
+        bearishFVGs.push(zone);
       }
     }
     
-    return { demandZone, supplyZone, bullishFVG, bearishFVG };
+    // Ordenar por força e manter apenas as melhores
+    const sortByStrengthAndProximity = (zones: EnhancedZone[]) => 
+      zones.sort((a, b) => {
+        const strengthOrder = { STRONG: 3, MODERATE: 2, WEAK: 1 };
+        if (strengthOrder[a.strength] !== strengthOrder[b.strength]) {
+          return strengthOrder[b.strength] - strengthOrder[a.strength];
+        }
+        return a.distance - b.distance;
+      }).slice(0, 3);
+    
+    return {
+      demandZones: sortByStrengthAndProximity(demandZones),
+      supplyZones: sortByStrengthAndProximity(supplyZones),
+      bullishFVGs: sortByStrengthAndProximity(bullishFVGs),
+      bearishFVGs: sortByStrengthAndProximity(bearishFVGs)
+    };
   }
   
-  private static _createTradePlan(analysis: SMCAnalysis, type: 'buy' | 'sell'): TradePlan | undefined {
-    const { bias, demandZone, supplyZone, majorHigh, majorLow } = analysis;
+  private static _calculateZoneStrength(candle: Candle, currentPrice: number, candles: Candle[], index: number): 'STRONG' | 'MODERATE' | 'WEAK' {
+    const zoneSize = Math.abs(candle.h - candle.l) / currentPrice * 100;
+    const distance = Math.abs(currentPrice - (candle.h + candle.l) / 2) / currentPrice * 100;
+    const bodySize = Math.abs(candle.c - candle.o) / (candle.h - candle.l);
     
-    if (type === 'buy') {
-      if (bias === 'BULLISH' && demandZone && majorHigh) {
-        const entryPrice = demandZone.high;
-        const stopPrice = demandZone.low;
+    let score = 0;
+    
+    // Zone size score
+    if (zoneSize < 0.5) score += 3;
+    else if (zoneSize < 1) score += 2;
+    else score += 1;
+    
+    // Distance score
+    if (distance < 2) score += 3;
+    else if (distance < 5) score += 2;
+    else score += 1;
+    
+    // Body size score
+    if (bodySize > 0.7) score += 2;
+    else if (bodySize > 0.5) score += 1;
+    
+    if (score >= 6) return 'STRONG';
+    if (score >= 4) return 'MODERATE';
+    return 'WEAK';
+  }
+  
+  private static _calculateFVGStrength(low: number, high: number, currentPrice: number): 'STRONG' | 'MODERATE' | 'WEAK' {
+    const gapSize = Math.abs(high - low) / currentPrice * 100;
+    const distance = Math.abs(currentPrice - (high + low) / 2) / currentPrice * 100;
+    
+    let score = 0;
+    
+    if (gapSize > 1) score += 3;
+    else if (gapSize > 0.5) score += 2;
+    else score += 1;
+    
+    if (distance < 3) score += 2;
+    else if (distance < 7) score += 1;
+    
+    if (score >= 4) return 'STRONG';
+    if (score >= 2) return 'MODERATE';
+    return 'WEAK';
+  }
+  
+  private static _calculateAge(formationIndex: number, totalCandles: number): 'FRESH' | 'RECENT' | 'OLD' {
+    const candlesAgo = totalCandles - formationIndex;
+    
+    if (candlesAgo <= 10) return 'FRESH';
+    if (candlesAgo <= 25) return 'RECENT';
+    return 'OLD';
+  }
+  
+  private static _isZoneTested(zone: Candle, candles: Candle[], formationIndex: number): boolean {
+    for (let i = formationIndex + 1; i < candles.length; i++) {
+      const candle = candles[i];
+      if (candle.l <= zone.h && candle.h >= zone.l) {
+        return true;
+      }
+    }
+    return false;
+  }
+  
+  private static _isFVGTested(low: number, high: number, candles: Candle[], formationIndex: number): boolean {
+    for (let i = formationIndex + 1; i < candles.length; i++) {
+      const candle = candles[i];
+      if (candle.l <= high && candle.h >= low) {
+        return true;
+      }
+    }
+    return false;
+  }
+  
+  private static _createMultipleTradePlans(analysis: SMCAnalysis, type: 'buy' | 'sell'): TradePlan[] {
+    const { bias, demandZones, supplyZones, majorHigh, majorLow } = analysis;
+    const plans: TradePlan[] = [];
+    
+    if (type === 'buy' && bias === 'BULLISH' && majorHigh) {
+      demandZones.slice(0, 2).forEach((zone, index) => {
+        const entryPrice = zone.high;
+        const stopPrice = zone.low;
         const targetPrice = majorHigh.price;
         const riskReward = (targetPrice - entryPrice) / (entryPrice - stopPrice);
         
-        const explanation = `This buy setup formed because we have a ${bias.toLowerCase()} market structure with a confirmed ${analysis.lastEvent || 'trend continuation'}. The entry is positioned at the top of a demand zone in the discount area (below 50% of the range), targeting the previous major high. This represents an institutional buying opportunity where smart money typically accumulates positions.`;
-        
-        return {
-          title: "Buy Plan (Discount)",
-          entry: entryPrice,
-          stop: stopPrice,
-          target: targetPrice,
-          riskReward,
-          explanation
-        };
-      }
+        if (riskReward > 0.5) {
+          const planStrength = this._calculatePlanStrength(zone, riskReward);
+          const explanation = `${index === 0 ? 'Primary' : 'Alternative'} buy setup in a ${bias.toLowerCase()} structure. Entry at demand zone (${zone.strength.toLowerCase()} strength, ${zone.age.toLowerCase()} formation) ${zone.distance.toFixed(1)}% from current price. ${zone.tested ? 'Zone previously tested.' : 'Fresh untested zone.'} R/R: ${riskReward.toFixed(2)}`;
+          
+          plans.push({
+            title: `Buy Plan ${index + 1} (${zone.strength})`,
+            entry: entryPrice,
+            stop: stopPrice,
+            target: targetPrice,
+            riskReward,
+            strength: planStrength,
+            age: zone.age,
+            explanation
+          });
+        }
+      });
     }
-
-    if (type === 'sell') {
-      if (bias === 'BEARISH' && supplyZone && majorLow) {
-        const entryPrice = supplyZone.low;
-        const stopPrice = supplyZone.high;
+    
+    if (type === 'sell' && bias === 'BEARISH' && majorLow) {
+      supplyZones.slice(0, 2).forEach((zone, index) => {
+        const entryPrice = zone.low;
+        const stopPrice = zone.high;
         const targetPrice = majorLow.price;
         const riskReward = (entryPrice - targetPrice) / (stopPrice - entryPrice);
         
-        const explanation = `This sell setup formed because we have a ${bias.toLowerCase()} market structure with a confirmed ${analysis.lastEvent || 'trend continuation'}. The entry is positioned at the bottom of a supply zone in the premium area (above 50% of the range), targeting the previous major low. This represents an institutional selling opportunity where smart money typically distributes positions.`;
-        
-        return {
-          title: "Sell Plan (Premium)",
-          entry: entryPrice,
-          stop: stopPrice,
-          target: targetPrice,
-          riskReward,
-          explanation
-        };
-      }
+        if (riskReward > 0.5) {
+          const planStrength = this._calculatePlanStrength(zone, riskReward);
+          const explanation = `${index === 0 ? 'Primary' : 'Alternative'} sell setup in a ${bias.toLowerCase()} structure. Entry at supply zone (${zone.strength.toLowerCase()} strength, ${zone.age.toLowerCase()} formation) ${zone.distance.toFixed(1)}% from current price. ${zone.tested ? 'Zone previously tested.' : 'Fresh untested zone.'} R/R: ${riskReward.toFixed(2)}`;
+          
+          plans.push({
+            title: `Sell Plan ${index + 1} (${zone.strength})`,
+            entry: entryPrice,
+            stop: stopPrice,
+            target: targetPrice,
+            riskReward,
+            strength: planStrength,
+            age: zone.age,
+            explanation
+          });
+        }
+      });
     }
     
-    return undefined;
+    return plans;
+  }
+  
+  private static _calculatePlanStrength(zone: EnhancedZone, riskReward: number): 'STRONG' | 'MODERATE' | 'WEAK' {
+    let score = 0;
+    
+    // Zone strength score
+    if (zone.strength === 'STRONG') score += 3;
+    else if (zone.strength === 'MODERATE') score += 2;
+    else score += 1;
+    
+    // Risk/Reward score
+    if (riskReward >= 3) score += 3;
+    else if (riskReward >= 2) score += 2;
+    else if (riskReward >= 1) score += 1;
+    
+    // Distance score
+    if (zone.distance < 2) score += 2;
+    else if (zone.distance < 5) score += 1;
+    
+    // Tested penalty
+    if (zone.tested) score -= 1;
+    
+    if (score >= 6) return 'STRONG';
+    if (score >= 4) return 'MODERATE';
+    return 'WEAK';
   }
 }

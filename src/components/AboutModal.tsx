@@ -8,7 +8,7 @@ import {
 } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { TrendingUp, TrendingDown, Target, Shield, Clock } from 'lucide-react';
+import { TrendingUp, TrendingDown, Target, Shield, Clock, Zap, Activity, AlertTriangle, CheckCircle } from 'lucide-react';
 
 interface AboutModalProps {
   isOpen: boolean;
@@ -94,31 +94,210 @@ export const AboutModal: React.FC<AboutModalProps> = ({ isOpen, onClose }) => {
 
           <Separator />
 
-          {/* Planos de Trade */}
+          {/* Classificações de Força */}
           <section>
-            <h3 className="text-lg font-semibold mb-3 text-foreground">Trade Plans</h3>
+            <h3 className="text-lg font-semibold mb-3 text-foreground">Zone Strength Classifications</h3>
             <div className="grid gap-3">
-              <div className="flex items-start gap-3">
-                <Target className="w-5 h-5 text-primary mt-0.5" />
+              <div className="flex items-start gap-3 p-3 rounded-lg bg-orange-500/10 border border-orange-500/30">
+                <Zap className="w-5 h-5 text-orange-500 mt-0.5" />
                 <div>
-                  <strong>Entry:</strong>
-                  <p className="text-sm text-muted-foreground">Ideal price to open position based on zones of interest.</p>
+                  <Badge className="mb-2 bg-orange-500 text-white">🔥 STRONG</Badge>
+                  <p className="text-sm text-muted-foreground">
+                    High-quality zones with multiple confluences. Distance from price 0.5-3%. Maximum reliability.
+                  </p>
                 </div>
               </div>
               
-              <div className="flex items-start gap-3">
-                <TrendingUp className="w-5 h-5 text-bullish mt-0.5" />
+              <div className="flex items-start gap-3 p-3 rounded-lg bg-blue-500/10 border border-blue-500/30">
+                <Activity className="w-5 h-5 text-blue-500 mt-0.5" />
                 <div>
-                  <strong>Target:</strong>
-                  <p className="text-sm text-muted-foreground">Profit objective based on market structure.</p>
+                  <Badge className="mb-2 bg-blue-500 text-white">⚡ MODERATE</Badge>
+                  <p className="text-sm text-muted-foreground">
+                    Good zones with some confluences. Distance from price 1-5%. Good reliability.
+                  </p>
                 </div>
               </div>
               
-              <div className="flex items-start gap-3">
-                <Shield className="w-5 h-5 text-destructive mt-0.5" />
+              <div className="flex items-start gap-3 p-3 rounded-lg bg-gray-500/10 border border-gray-500/30">
+                <Target className="w-5 h-5 text-gray-500 mt-0.5" />
                 <div>
-                  <strong>Stop Loss:</strong>
-                  <p className="text-sm text-muted-foreground">Exit point to limit losses.</p>
+                  <Badge className="mb-2 bg-gray-500 text-white">📊 WEAK</Badge>
+                  <p className="text-sm text-muted-foreground">
+                    Basic zones without major confluences. Distance from price &gt;3%. Lower reliability.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <Separator />
+
+          {/* Classificações de Idade */}
+          <section>
+            <h3 className="text-lg font-semibold mb-3 text-foreground">Zone Age Classifications</h3>
+            <div className="grid gap-3">
+              <div className="flex items-start gap-3 p-3 rounded-lg bg-green-500/10 border border-green-500/30">
+                <CheckCircle className="w-5 h-5 text-green-500 mt-0.5" />
+                <div>
+                  <Badge className="mb-2 bg-green-500 text-white">🆕 FRESH</Badge>
+                  <p className="text-sm text-muted-foreground">
+                    Recently formed zones (last 5-10 candles). Higher reaction probability.
+                  </p>
+                </div>
+              </div>
+              
+              <div className="flex items-start gap-3 p-3 rounded-lg bg-yellow-500/10 border border-yellow-500/30">
+                <Clock className="w-5 h-5 text-yellow-600 mt-0.5" />
+                <div>
+                  <Badge className="mb-2 bg-yellow-600 text-white">📅 RECENT</Badge>
+                  <p className="text-sm text-muted-foreground">
+                    Moderately aged zones (10-20 candles). Good reaction probability.
+                  </p>
+                </div>
+              </div>
+              
+              <div className="flex items-start gap-3 p-3 rounded-lg bg-red-500/10 border border-red-500/30">
+                <AlertTriangle className="w-5 h-5 text-red-500 mt-0.5" />
+                <div>
+                  <Badge className="mb-2 bg-red-500 text-white">⏰ OLD</Badge>
+                  <p className="text-sm text-muted-foreground">
+                    Older zones (more than 20 candles). Lower reaction probability.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <Separator />
+
+          {/* Status das Zonas */}
+          <section>
+            <h3 className="text-lg font-semibold mb-3 text-foreground">Zone Test Status</h3>
+            <div className="grid gap-3">
+              <div className="flex items-start gap-3 p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/30">
+                <CheckCircle className="w-5 h-5 text-emerald-500 mt-0.5" />
+                <div>
+                  <Badge className="mb-2 bg-emerald-500 text-white">✅ UNTESTED</Badge>
+                  <p className="text-sm text-muted-foreground">
+                    Zone has not been retested since formation. Higher reliability and reaction probability.
+                  </p>
+                </div>
+              </div>
+              
+              <div className="flex items-start gap-3 p-3 rounded-lg bg-amber-500/10 border border-amber-500/30">
+                <AlertTriangle className="w-5 h-5 text-amber-600 mt-0.5" />
+                <div>
+                  <Badge className="mb-2 bg-amber-600 text-white">⚠️ TESTED</Badge>
+                  <p className="text-sm text-muted-foreground">
+                    Zone has been retested at least once. Lower reliability but still valid.
+                  </p>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <Separator />
+
+          {/* Múltiplos Planos de Trade */}
+          <section>
+            <h3 className="text-lg font-semibold mb-3 text-foreground">Multiple Trade Plans</h3>
+            <div className="space-y-4">
+              <p className="text-sm text-muted-foreground">
+                Sir BAP AI now provides up to 3 trade plans for each direction (buy/sell), ranked by quality and probability.
+              </p>
+              
+              <div className="grid gap-3">
+                <div className="flex items-start gap-3">
+                  <Target className="w-5 h-5 text-primary mt-0.5" />
+                  <div>
+                    <strong>Plan Selection:</strong>
+                    <p className="text-sm text-muted-foreground">Choose plans with higher strength zones and better R/R ratios.</p>
+                  </div>
+                </div>
+                
+                <div className="flex items-start gap-3">
+                  <TrendingUp className="w-5 h-5 text-bullish mt-0.5" />
+                  <div>
+                    <strong>Entry Types:</strong>
+                    <p className="text-sm text-muted-foreground">
+                      <Badge variant="outline" className="mr-2">Pullback</Badge> Entry at zone retest
+                      <br />
+                      <Badge variant="outline" className="mt-1">Breakout</Badge> Entry at level break
+                    </p>
+                  </div>
+                </div>
+                
+                <div className="flex items-start gap-3">
+                  <Shield className="w-5 h-5 text-destructive mt-0.5" />
+                  <div>
+                    <strong>Risk Management:</strong>
+                    <p className="text-sm text-muted-foreground">Always use stop losses and respect R/R ratios.</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </section>
+
+          <Separator />
+
+          {/* R/R Ratio */}
+          <section>
+            <h3 className="text-lg font-semibold mb-3 text-foreground">Risk/Reward Ratio (R/R)</h3>
+            <div className="space-y-3">
+              <p className="text-sm text-muted-foreground">
+                R/R ratio shows how much profit you can make for each dollar risked.
+              </p>
+              
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <div className="p-3 rounded-lg bg-emerald-500/10 text-center border border-emerald-500/30">
+                  <p className="font-bold text-emerald-600">1:3+</p>
+                  <p className="text-xs text-muted-foreground">Excellent</p>
+                </div>
+                <div className="p-3 rounded-lg bg-blue-500/10 text-center border border-blue-500/30">
+                  <p className="font-bold text-blue-600">1:2</p>
+                  <p className="text-xs text-muted-foreground">Good</p>
+                </div>
+                <div className="p-3 rounded-lg bg-amber-500/10 text-center border border-amber-500/30">
+                  <p className="font-bold text-amber-600">1:1</p>
+                  <p className="text-xs text-muted-foreground">Minimum</p>
+                </div>
+              </div>
+              
+              <div className="p-3 rounded-lg bg-muted/30">
+                <p className="text-sm font-medium">Example:</p>
+                <p className="text-xs text-muted-foreground">
+                  R/R 1:3 means: Risk $100 to potentially gain $300. If you win 30% of trades, you break even.
+                </p>
+              </div>
+            </div>
+          </section>
+
+          <Separator />
+
+          {/* Distância das Zonas */}
+          <section>
+            <h3 className="text-lg font-semibold mb-3 text-foreground">Zone Distance Interpretation</h3>
+            <div className="space-y-3">
+              <p className="text-sm text-muted-foreground">
+                Distance shows how far zones are from current price as a percentage.
+              </p>
+              
+              <div className="grid gap-3">
+                <div className="flex items-center gap-3 p-2 rounded bg-emerald-500/10">
+                  <div className="w-3 h-3 bg-emerald-500 rounded-full"></div>
+                  <span className="text-sm"><strong>0-1%:</strong> Very close, immediate relevance</span>
+                </div>
+                <div className="flex items-center gap-3 p-2 rounded bg-blue-500/10">
+                  <div className="w-3 h-3 bg-blue-500 rounded-full"></div>
+                  <span className="text-sm"><strong>1-3%:</strong> Close, short-term relevance</span>
+                </div>
+                <div className="flex items-center gap-3 p-2 rounded bg-amber-500/10">
+                  <div className="w-3 h-3 bg-amber-600 rounded-full"></div>
+                  <span className="text-sm"><strong>3-5%:</strong> Moderate distance, medium-term</span>
+                </div>
+                <div className="flex items-center gap-3 p-2 rounded bg-red-500/10">
+                  <div className="w-3 h-3 bg-red-500 rounded-full"></div>
+                  <span className="text-sm"><strong>5%+:</strong> Far, long-term relevance</span>
                 </div>
               </div>
             </div>

@@ -12,18 +12,11 @@ interface EnhancedZone {
 }
 
 interface ZonesCardProps {
-  demandZones: EnhancedZone[];
-  supplyZones: EnhancedZone[];
-  bullishFVGs: EnhancedZone[];
-  bearishFVGs: EnhancedZone[];
+  analysis: any;
 }
 
-export const ZonesCard: React.FC<ZonesCardProps> = ({
-  demandZones,
-  supplyZones,
-  bullishFVGs,
-  bearishFVGs
-}) => {
+export const ZonesCard: React.FC<ZonesCardProps> = ({ analysis }) => {
+  const { demandZones, supplyZones, bullishFVGs, bearishFVGs } = analysis;
   const formatPrice = (price: number) => 
     new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(price);
 

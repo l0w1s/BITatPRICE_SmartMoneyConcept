@@ -3,7 +3,7 @@ import { Button } from '@/components/ui/button';
 import { Card } from '@/components/ui/card';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Badge } from '@/components/ui/badge';
-import { Loader2, Info, Heart } from 'lucide-react';
+import { Loader2, Info, Heart, Activity, Bitcoin, TrendingUp } from 'lucide-react';
 import { BitcoinIcon } from '@/components/BitcoinIcon';
 import { PriceDisplay } from '@/components/PriceDisplay';
 import { BiasCard } from '@/components/BiasCard';
@@ -11,9 +11,16 @@ import { TradePlans } from '@/components/TradePlans';
 import { ZonesCard } from '@/components/ZonesCard';
 import { AboutModal } from '@/components/AboutModal';
 import { DonateModal } from '@/components/DonateModal';
+import { AlertsCard } from '@/components/AlertsCard';
+import { MultiTimeframeAnalysis } from '@/components/MultiTimeframeAnalysis';
+import { PositionSizingCard } from '@/components/PositionSizingCard';
+import { PerformanceHistory } from '@/components/PerformanceHistory';
+import { SettingsModal } from '@/components/SettingsModal';
 import { BitcoinAPI } from '@/services/api';
 import { SMCAnalyzer, SMCAnalysis } from '@/services/smc';
 import { useToast } from '@/hooks/use-toast';
+import { usePerformance } from '@/hooks/usePerformance';
+import { getSettings, UserSettings } from '@/utils/storage';
 
 const Index = () => {
   const [timeframe, setTimeframe] = useState('1h');
@@ -22,7 +29,10 @@ const Index = () => {
   const [error, setError] = useState<string>('');
   const [aboutModalOpen, setAboutModalOpen] = useState(false);
   const [donateModalOpen, setDonateModalOpen] = useState(false);
+  const [currentPrice, setCurrentPrice] = useState<number>(0);
+  const [settings, setSettings] = useState<UserSettings>(getSettings());
   const { toast } = useToast();
+  const { addRecord } = usePerformance();
 
   const handleAnalyze = async () => {
     setLoading(true);
@@ -37,9 +47,17 @@ const Index = () => {
         throw new Error(result.error);
       }
       
+      // Get current price from latest candle
+      const latestPrice = candles[candles.length - 1]?.c || 0;
+      setCurrentPrice(latestPrice);
+      
       setAnalysis(result);
+      
+      // Add to performance history
+      addRecord(result, timeframe, latestPrice);
+      
       toast({
-        title: "Analysis completed!",
+        title: "✅ Análise Concluída",
         description: `Market analyzed on ${timeframe.toUpperCase()} timeframe`,
       });
     } catch (err) {
@@ -58,6 +76,31 @@ const Index = () => {
   useEffect(() => {
     handleAnalyze();
   }, [timeframe]);
+
+  useEffect(() => {
+    const currentSettings = getSettings();
+    setTimeframe(currentSettings.defaultTimeframe);
+  }, []);
+
+  // Auto refresh if enabled
+  useEffect(() => {
+    if (!settings.autoRefresh) return;
+
+    const interval = setInterval(() => {
+      if (!loading) {
+        handleAnalyze();
+      }
+    }, settings.refreshInterval * 1000);
+
+    return () => clearInterval(interval);
+  }, [settings.autoRefresh, settings.refreshInterval, loading]);
+
+  const handleSettingsChange = (newSettings: UserSettings) => {
+    setSettings(newSettings);
+    if (newSettings.defaultTimeframe !== timeframe) {
+      setTimeframe(newSettings.defaultTimeframe);
+    }
+  };
 
   return (
     <div className="min-h-screen bg-background">
@@ -88,7 +131,7 @@ const Index = () => {
 
         {/* Price Display */}
         {analysis && (
-          <PriceDisplay price={analysis.currentPrice} />
+          <PriceDisplay analysis={analysis} />
         )}
 
         {/* Controls */}
@@ -120,9 +163,20 @@ const Index = () => {
                     Analyzing Market...
                   </>
                 ) : (
-                  'Update Analysis'
+                  <>
+                    <Activity className="mr-2 h-4 w-4" />
+                    Update Analysis
+                  </>
                 )}
               </Button>
+
+              <SettingsModal onSettingsChange={handleSettingsChange} />
+            
+              {settings.autoRefresh && (
+                <Badge variant="secondary" className="text-xs">
+                  🔄 Auto: {settings.refreshInterval}s
+                </Badge>
+              )}
             </div>
             
             <p className="text-xs text-muted-foreground text-center">
@@ -164,26 +218,24 @@ const Index = () => {
         {/* Analysis Results */}
         {analysis && !loading && (
           <div className="space-y-6">
-            <BiasCard
-              bias={analysis.bias}
-              lastEvent={analysis.lastEvent}
-              breakLevel={analysis.breakLevel}
-              timeframe={analysis.timeframe}
-              probability={analysis.probability}
-              strength={analysis.strength}
-            />
+            <BiasCard analysis={analysis} />
 
-            <TradePlans
-              buyPlans={analysis.buyPlans}
-              sellPlans={analysis.sellPlans}
-            />
+            <div className="grid gap-6 md:grid-cols-2">
+              <ZonesCard analysis={analysis} />
+            </div>
 
-            <ZonesCard
-              demandZones={analysis.demandZones}
-              supplyZones={analysis.supplyZones}
-              bullishFVGs={analysis.bullishFVGs}
-              bearishFVGs={analysis.bearishFVGs}
-            />
+            <TradePlans analysis={analysis} />
+
+            {/* New Enhanced Features */}
+            <div className="grid gap-6 lg:grid-cols-2">
+              <AlertsCard analysis={analysis} currentPrice={currentPrice} />
+              <PositionSizingCard analysis={analysis} currentPrice={currentPrice} />
+            </div>
+
+            <div className="grid gap-6 lg:grid-cols-2">
+              <MultiTimeframeAnalysis currentTimeframe={timeframe} />
+              <PerformanceHistory />
+            </div>
           </div>
         )}
 

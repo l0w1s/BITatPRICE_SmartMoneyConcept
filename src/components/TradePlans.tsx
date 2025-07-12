@@ -15,11 +15,11 @@ interface TradePlan {
 }
 
 interface TradePlansProps {
-  buyPlans: TradePlan[];
-  sellPlans: TradePlan[];
+  analysis: any;
 }
 
-export const TradePlans: React.FC<TradePlansProps> = ({ buyPlans, sellPlans }) => {
+export const TradePlans: React.FC<TradePlansProps> = ({ analysis }) => {
+  const { buyPlans, sellPlans } = analysis;
   const formatPrice = (price: number) => 
     new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(price);
 

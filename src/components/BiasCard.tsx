@@ -4,22 +4,11 @@ import { Badge } from '@/components/ui/badge';
 import { TrendingUp, TrendingDown, ArrowRight } from 'lucide-react';
 
 interface BiasCardProps {
-  bias: 'BULLISH' | 'BEARISH' | 'SIDEWAYS';
-  lastEvent?: string;
-  breakLevel?: number;
-  timeframe: string;
-  probability: number;
-  strength: 'WEAK' | 'MODERATE' | 'STRONG';
+  analysis: any;
 }
 
-export const BiasCard: React.FC<BiasCardProps> = ({ 
-  bias, 
-  lastEvent, 
-  breakLevel, 
-  timeframe, 
-  probability,
-  strength 
-}) => {
+export const BiasCard: React.FC<BiasCardProps> = ({ analysis }) => {
+  const { bias, lastEvent, breakLevel, timeframe, probability, strength } = analysis;
   const formatPrice = (price: number) => 
     new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(price);
 

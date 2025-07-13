@@ -8,7 +8,7 @@ import {
 } from '@/components/ui/dialog';
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
-import { TrendingUp, TrendingDown, Target, Shield, Clock, Zap, Activity, AlertTriangle, CheckCircle } from 'lucide-react';
+import { TrendingUp, TrendingDown, Target, Shield, Clock, Zap, Activity, AlertTriangle, CheckCircle, Bell } from 'lucide-react';
 
 interface AboutModalProps {
   isOpen: boolean;
@@ -342,6 +342,76 @@ export const AboutModal: React.FC<AboutModalProps> = ({ isOpen, onClose }) => {
                 <p className="text-xs text-muted-foreground">
                   Signals lose validity when there's a break of identified structure or formation of new SMC patterns.
                 </p>
+              </div>
+            </div>
+          </section>
+
+          <Separator />
+
+          {/* New Features */}
+          <section>
+            <h3 className="text-lg font-semibold mb-3 text-foreground">🆕 New Features</h3>
+            <div className="space-y-4">
+              <div className="grid gap-3">
+                <div className="flex items-start gap-3 p-3 rounded-lg bg-primary/5 border border-primary/20">
+                  <Bell className="w-5 h-5 text-primary mt-0.5" />
+                  <div>
+                    <Badge className="mb-2 bg-primary text-primary-foreground">🚨 Zone Alerts</Badge>
+                    <p className="text-sm text-muted-foreground">
+                      Automatically monitors price proximity to demand/supply zones. Get notifications when price approaches critical levels within 0.5%. Toggle alerts on/off for each zone.
+                    </p>
+                  </div>
+                </div>
+                
+                <div className="flex items-start gap-3 p-3 rounded-lg bg-blue-500/10 border border-blue-500/30">
+                  <Activity className="w-5 h-5 text-blue-500 mt-0.5" />
+                  <div>
+                    <Badge className="mb-2 bg-blue-500 text-white">📊 Multi-Timeframe</Badge>
+                    <p className="text-sm text-muted-foreground">
+                      Analyze multiple timeframes simultaneously. Detect confluences when 2+ timeframes show the same bias. Stronger signals when multiple TFs align.
+                    </p>
+                  </div>
+                </div>
+                
+                <div className="flex items-start gap-3 p-3 rounded-lg bg-green-500/10 border border-green-500/30">
+                  <Target className="w-5 h-5 text-green-500 mt-0.5" />
+                  <div>
+                    <Badge className="mb-2 bg-green-500 text-white">🧮 Position Calculator</Badge>
+                    <p className="text-sm text-muted-foreground">
+                      Calculate exact position sizes based on your account capital and risk percentage. Shows USD and BTC amounts for each trade plan with proper risk management.
+                    </p>
+                  </div>
+                </div>
+                
+                <div className="flex items-start gap-3 p-3 rounded-lg bg-purple-500/10 border border-purple-500/30">
+                  <Clock className="w-5 h-5 text-purple-500 mt-0.5" />
+                  <div>
+                    <Badge className="mb-2 bg-purple-500 text-white">📈 Performance History</Badge>
+                    <p className="text-sm text-muted-foreground">
+                      Track your analysis history and success rates. View statistics like total analyses, most used timeframes, bias distribution, and recent signals performance.
+                    </p>
+                  </div>
+                </div>
+                
+                <div className="flex items-start gap-3 p-3 rounded-lg bg-orange-500/10 border border-orange-500/30">
+                  <Zap className="w-5 h-5 text-orange-500 mt-0.5" />
+                  <div>
+                    <Badge className="mb-2 bg-orange-500 text-white">⚙️ Advanced Settings</Badge>
+                    <p className="text-sm text-muted-foreground">
+                      Customize analysis parameters, default account settings, auto-refresh intervals, and theme preferences. Save your configurations for consistent experience.
+                    </p>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="p-3 rounded-lg bg-muted/30">
+                <p className="text-sm font-medium mb-1">💡 Pro Tips:</p>
+                <ul className="text-xs text-muted-foreground space-y-1">
+                  <li>• Use alerts to catch price movements while away from charts</li>
+                  <li>• Check multi-timeframe confluences for higher probability setups</li>
+                  <li>• Always calculate position sizes before entering trades</li>
+                  <li>• Review performance history to improve your analysis skills</li>
+                </ul>
               </div>
             </div>
           </section>

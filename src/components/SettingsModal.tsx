@@ -29,8 +29,8 @@ export function SettingsModal({ onSettingsChange }: SettingsModalProps) {
     saveSettings(settings);
     onSettingsChange?.(settings);
     toast({
-      title: "✅ Configurações Salvas",
-      description: "Suas preferências foram atualizadas com sucesso.",
+      title: "✅ Settings Saved",
+      description: "Your preferences have been successfully updated.",
     });
     setIsOpen(false);
   };
@@ -41,16 +41,16 @@ export function SettingsModal({ onSettingsChange }: SettingsModalProps) {
     setSettings(defaultSettings);
     onSettingsChange?.(defaultSettings);
     toast({
-      title: "🔄 Configurações Resetadas",
-      description: "Todas as configurações foram restauradas ao padrão.",
+      title: "🔄 Settings Reset",
+      description: "All settings have been restored to default.",
     });
   };
 
   const handleExport = () => {
     exportData();
     toast({
-      title: "📊 Dados Exportados",
-      description: "Download do backup iniciado.",
+      title: "📊 Data Exported",
+      description: "Backup download started.",
     });
   };
 
@@ -63,25 +63,25 @@ export function SettingsModal({ onSettingsChange }: SettingsModalProps) {
       <DialogTrigger asChild>
         <Button variant="outline" size="sm">
           <Settings className="h-4 w-4 mr-1" />
-          Configurações
+          Settings
         </Button>
       </DialogTrigger>
       <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle className="flex items-center gap-2">
             <Settings className="h-5 w-5" />
-            Configurações Avançadas
+            Advanced Settings
           </DialogTitle>
         </DialogHeader>
         
         <div className="space-y-6">
           {/* Analysis Settings */}
           <div className="space-y-4">
-            <h3 className="font-medium">Parâmetros de Análise</h3>
+            <h3 className="font-medium">Analysis Parameters</h3>
             
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="lookback">Período de Lookback</Label>
+                <Label htmlFor="lookback">Lookback Period</Label>
                 <Input
                   id="lookback"
                   type="number"
@@ -91,12 +91,12 @@ export function SettingsModal({ onSettingsChange }: SettingsModalProps) {
                   onChange={(e) => updateSetting('lookbackPeriod', Number(e.target.value))}
                 />
                 <p className="text-xs text-muted-foreground">
-                  Quantos candles usar para identificar swings (10-50)
+                  How many candles to use for swing identification (10-50)
                 </p>
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="sensitivity">Sensibilidade das Zonas</Label>
+                <Label htmlFor="sensitivity">Zone Sensitivity</Label>
                 <Select 
                   value={settings.zoneSensitivity} 
                   onValueChange={(value: 'low' | 'medium' | 'high') => updateSetting('zoneSensitivity', value)}
@@ -105,16 +105,16 @@ export function SettingsModal({ onSettingsChange }: SettingsModalProps) {
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="low">Baixa (menos zonas)</SelectItem>
-                    <SelectItem value="medium">Média (balanceado)</SelectItem>
-                    <SelectItem value="high">Alta (mais zonas)</SelectItem>
+                    <SelectItem value="low">Low (fewer zones)</SelectItem>
+                    <SelectItem value="medium">Medium (balanced)</SelectItem>
+                    <SelectItem value="high">High (more zones)</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
             </div>
 
             <div className="space-y-2">
-              <Label htmlFor="default-timeframe">Timeframe Padrão</Label>
+              <Label htmlFor="default-timeframe">Default Timeframe</Label>
               <Select 
                 value={settings.defaultTimeframe} 
                 onValueChange={(value) => updateSetting('defaultTimeframe', value)}
@@ -123,11 +123,11 @@ export function SettingsModal({ onSettingsChange }: SettingsModalProps) {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="15m">15 minutos</SelectItem>
-                  <SelectItem value="30m">30 minutos</SelectItem>
-                  <SelectItem value="1h">1 hora</SelectItem>
-                  <SelectItem value="4h">4 horas</SelectItem>
-                  <SelectItem value="1d">1 dia</SelectItem>
+                  <SelectItem value="15m">15 minutes</SelectItem>
+                  <SelectItem value="30m">30 minutes</SelectItem>
+                  <SelectItem value="1h">1 hour</SelectItem>
+                  <SelectItem value="4h">4 hours</SelectItem>
+                  <SelectItem value="1d">1 day</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -137,11 +137,11 @@ export function SettingsModal({ onSettingsChange }: SettingsModalProps) {
 
           {/* Trading Settings */}
           <div className="space-y-4">
-            <h3 className="font-medium">Configurações de Trading</h3>
+            <h3 className="font-medium">Trading Settings</h3>
             
             <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label htmlFor="account-size">Capital da Conta (USD)</Label>
+                <Label htmlFor="account-size">Account Capital (USD)</Label>
                 <Input
                   id="account-size"
                   type="number"
@@ -152,7 +152,7 @@ export function SettingsModal({ onSettingsChange }: SettingsModalProps) {
               </div>
               
               <div className="space-y-2">
-                <Label htmlFor="risk-percentage">Risco por Trade (%)</Label>
+                <Label htmlFor="risk-percentage">Risk per Trade (%)</Label>
                 <Input
                   id="risk-percentage"
                   type="number"
@@ -170,13 +170,13 @@ export function SettingsModal({ onSettingsChange }: SettingsModalProps) {
 
           {/* App Settings */}
           <div className="space-y-4">
-            <h3 className="font-medium">Configurações do App</h3>
+            <h3 className="font-medium">App Settings</h3>
             
             <div className="flex items-center justify-between">
               <div>
-                <Label htmlFor="alerts">Alertas de Zonas</Label>
+                <Label htmlFor="alerts">Zone Alerts</Label>
                 <p className="text-xs text-muted-foreground">
-                  Receber notificações quando preço se aproxima de zonas
+                  Receive notifications when price approaches zones
                 </p>
               </div>
               <Switch
@@ -190,7 +190,7 @@ export function SettingsModal({ onSettingsChange }: SettingsModalProps) {
               <div>
                 <Label htmlFor="auto-refresh">Auto Refresh</Label>
                 <p className="text-xs text-muted-foreground">
-                  Atualizar análise automaticamente
+                  Update analysis automatically
                 </p>
               </div>
               <Switch
@@ -202,7 +202,7 @@ export function SettingsModal({ onSettingsChange }: SettingsModalProps) {
 
             {settings.autoRefresh && (
               <div className="space-y-2">
-                <Label htmlFor="refresh-interval">Intervalo de Refresh (segundos)</Label>
+                <Label htmlFor="refresh-interval">Refresh Interval (seconds)</Label>
                 <Input
                   id="refresh-interval"
                   type="number"
@@ -215,7 +215,7 @@ export function SettingsModal({ onSettingsChange }: SettingsModalProps) {
             )}
 
             <div className="space-y-2">
-              <Label htmlFor="theme">Tema</Label>
+              <Label htmlFor="theme">Theme</Label>
               <Select 
                 value={settings.theme} 
                 onValueChange={(value: 'light' | 'dark' | 'system') => updateSetting('theme', value)}
@@ -224,9 +224,9 @@ export function SettingsModal({ onSettingsChange }: SettingsModalProps) {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="light">Claro</SelectItem>
-                  <SelectItem value="dark">Escuro</SelectItem>
-                  <SelectItem value="system">Sistema</SelectItem>
+                  <SelectItem value="light">Light</SelectItem>
+                  <SelectItem value="dark">Dark</SelectItem>
+                  <SelectItem value="system">System</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -236,16 +236,16 @@ export function SettingsModal({ onSettingsChange }: SettingsModalProps) {
 
           {/* Data Management */}
           <div className="space-y-4">
-            <h3 className="font-medium">Gerenciamento de Dados</h3>
+            <h3 className="font-medium">Data Management</h3>
             
             <div className="flex gap-2">
               <Button variant="outline" onClick={handleExport} className="flex-1">
                 <Download className="h-4 w-4 mr-2" />
-                Exportar Backup
+                Export Backup
               </Button>
               <Button variant="outline" onClick={handleReset} className="flex-1">
                 <RotateCcw className="h-4 w-4 mr-2" />
-                Resetar Tudo
+                Reset All
               </Button>
             </div>
           </div>
@@ -253,10 +253,10 @@ export function SettingsModal({ onSettingsChange }: SettingsModalProps) {
           {/* Action Buttons */}
           <div className="flex gap-2 pt-4">
             <Button onClick={handleSave} className="flex-1">
-              Salvar Configurações
+              Save Settings
             </Button>
             <Button variant="outline" onClick={() => setIsOpen(false)} className="flex-1">
-              Cancelar
+              Cancel
             </Button>
           </div>
         </div>

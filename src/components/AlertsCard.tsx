@@ -20,12 +20,12 @@ export function AlertsCard({ analysis, currentPrice }: AlertsCardProps) {
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Bell className="h-5 w-5" />
-            Alertas de Zonas
+            Zone Alerts
           </CardTitle>
         </CardHeader>
         <CardContent>
           <p className="text-muted-foreground text-center py-4">
-            Nenhum alerta ativo. Execute uma análise para configurar alertas automáticos.
+            No active alerts. Run an analysis to configure automatic alerts.
           </p>
         </CardContent>
       </Card>
@@ -41,8 +41,8 @@ export function AlertsCard({ analysis, currentPrice }: AlertsCardProps) {
         <CardTitle className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Bell className="h-5 w-5" />
-            Alertas de Zonas
-            <Badge variant="secondary">{activeAlerts.length} ativos</Badge>
+            Zone Alerts
+            <Badge variant="secondary">{activeAlerts.length} active</Badge>
           </div>
           <Button
             variant="outline"
@@ -64,9 +64,9 @@ export function AlertsCard({ analysis, currentPrice }: AlertsCardProps) {
               key={alert.id}
               className={`flex items-center justify-between p-3 rounded-lg border ${
                 alert.triggered
-                  ? 'bg-yellow-50 border-yellow-200 dark:bg-yellow-950 dark:border-yellow-800'
+                  ? 'bg-green-50 border-green-200 dark:bg-green-950 dark:border-green-800'
                   : isNear && alert.isActive
-                  ? 'bg-orange-50 border-orange-200 dark:bg-orange-950 dark:border-orange-800'
+                  ? 'bg-blue-50 border-blue-200 dark:bg-blue-950 dark:border-blue-800'
                   : 'bg-muted/50'
               }`}
             >
@@ -76,16 +76,16 @@ export function AlertsCard({ analysis, currentPrice }: AlertsCardProps) {
                     variant={alert.type === 'demand' ? 'default' : 'destructive'}
                     className="text-xs"
                   >
-                    {alert.type === 'demand' ? 'Demanda' : 'Oferta'}
+                    {alert.type === 'demand' ? 'Demand' : 'Supply'}
                   </Badge>
                   {alert.triggered && (
                     <Badge variant="secondary" className="text-xs">
-                      ⚠️ Ativado
+                      ⚠️ Triggered
                     </Badge>
                   )}
                   {isNear && alert.isActive && !alert.triggered && (
                     <Badge variant="outline" className="text-xs">
-                      🎯 Próximo
+                      🎯 Near
                     </Badge>
                   )}
                 </div>
@@ -93,7 +93,7 @@ export function AlertsCard({ analysis, currentPrice }: AlertsCardProps) {
                   ${alert.zonePrice.toFixed(0)}
                 </p>
                 <p className="text-xs text-muted-foreground">
-                  Distância: {distance.toFixed(2)}%
+                  Distance: {distance.toFixed(2)}%
                 </p>
               </div>
               <Switch
@@ -108,7 +108,7 @@ export function AlertsCard({ analysis, currentPrice }: AlertsCardProps) {
         {triggeredAlerts.length > 0 && (
           <div className="text-center pt-2">
             <p className="text-xs text-muted-foreground">
-              {triggeredAlerts.length} alerta(s) foi(ram) ativado(s)
+              {triggeredAlerts.length} alert(s) triggered
             </p>
           </div>
         )}

@@ -65,7 +65,7 @@ export function MultiTimeframeAnalysis({ currentTimeframe }: MultiTimeframeAnaly
             timeframe,
             analysis: null,
             loading: false,
-            error: error instanceof Error ? error.message : 'Erro desconhecido'
+            error: error instanceof Error ? error.message : 'Unknown error'
           };
         }
       })
@@ -115,7 +115,7 @@ export function MultiTimeframeAnalysis({ currentTimeframe }: MultiTimeframeAnaly
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center justify-between">
-          <span>Análise Multi-Timeframe</span>
+          <span>Multi-Timeframe Analysis</span>
           <Button
             onClick={analyzeAllTimeframes}
             disabled={isAnalyzing}
@@ -124,10 +124,10 @@ export function MultiTimeframeAnalysis({ currentTimeframe }: MultiTimeframeAnaly
             {isAnalyzing ? (
               <>
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                Analisando...
+                Analyzing...
               </>
             ) : (
-              'Analisar Todos'
+              'Analyze All'
             )}
           </Button>
         </CardTitle>
@@ -135,7 +135,7 @@ export function MultiTimeframeAnalysis({ currentTimeframe }: MultiTimeframeAnaly
       <CardContent className="space-y-4">
         {confluences.length > 0 && (
           <div className="p-3 bg-blue-50 dark:bg-blue-950 rounded-lg border border-blue-200 dark:border-blue-800">
-            <h4 className="font-medium mb-2">🎯 Confluências Detectadas</h4>
+            <h4 className="font-medium mb-2">🎯 Confluences Detected</h4>
             {confluences.map((confluence, index) => (
               <Badge
                 key={index}
@@ -161,20 +161,20 @@ export function MultiTimeframeAnalysis({ currentTimeframe }: MultiTimeframeAnaly
               <div className="flex items-center justify-between mb-2">
                 <span className="font-medium text-sm">{tf.timeframe}</span>
                 {tf.timeframe === currentTimeframe && (
-                  <Badge variant="outline" className="text-xs">Atual</Badge>
+                  <Badge variant="outline" className="text-xs">Current</Badge>
                 )}
               </div>
 
               {tf.loading && (
                 <div className="flex items-center gap-2 text-sm text-muted-foreground">
                   <Loader2 className="h-3 w-3 animate-spin" />
-                  Carregando...
+                  Loading...
                 </div>
               )}
 
               {tf.error && (
                 <div className="text-xs text-red-500">
-                  Erro: {tf.error}
+                  Error: {tf.error}
                 </div>
               )}
 
@@ -191,16 +191,16 @@ export function MultiTimeframeAnalysis({ currentTimeframe }: MultiTimeframeAnaly
                   </div>
                   
                   <div className="text-xs text-muted-foreground">
-                    <div>Demanda: {tf.analysis.demandZones.length}</div>
-                    <div>Oferta: {tf.analysis.supplyZones.length}</div>
-                    <div>Planos: {tf.analysis.buyPlans.length + tf.analysis.sellPlans.length}</div>
+                    <div>Demand: {tf.analysis.demandZones.length}</div>
+                    <div>Supply: {tf.analysis.supplyZones.length}</div>
+                    <div>Plans: {tf.analysis.buyPlans.length + tf.analysis.sellPlans.length}</div>
                   </div>
                 </div>
               )}
 
               {!tf.loading && !tf.error && !tf.analysis && (
                 <div className="text-xs text-muted-foreground">
-                  Clique em "Analisar Todos"
+                  Click "Analyze All"
                 </div>
               )}
             </div>

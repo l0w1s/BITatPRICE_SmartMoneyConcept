@@ -41,12 +41,12 @@ export function PositionSizingCard({ analysis, currentPrice }: PositionSizingCar
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
             <Calculator className="h-5 w-5" />
-            Calculadora de Position Sizing
+            Position Sizing Calculator
           </CardTitle>
         </CardHeader>
         <CardContent>
           <p className="text-muted-foreground text-center py-4">
-            Execute uma análise para calcular tamanhos de posição.
+            Run an analysis to calculate position sizes.
           </p>
         </CardContent>
       </Card>
@@ -63,14 +63,14 @@ export function PositionSizingCard({ analysis, currentPrice }: PositionSizingCar
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Calculator className="h-5 w-5" />
-          Calculadora de Position Sizing
+          Position Sizing Calculator
         </CardTitle>
       </CardHeader>
       <CardContent className="space-y-4">
         {/* Settings */}
         <div className="grid grid-cols-2 gap-4">
           <div className="space-y-2">
-            <Label htmlFor="account-size">Capital da Conta (USD)</Label>
+            <Label htmlFor="account-size">Account Capital (USD)</Label>
             <Input
               id="account-size"
               type="number"
@@ -80,7 +80,7 @@ export function PositionSizingCard({ analysis, currentPrice }: PositionSizingCar
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="risk-percentage">Risco por Trade (%)</Label>
+            <Label htmlFor="risk-percentage">Risk per Trade (%)</Label>
             <Input
               id="risk-percentage"
               type="number"
@@ -96,7 +96,7 @@ export function PositionSizingCard({ analysis, currentPrice }: PositionSizingCar
 
         {/* Trade Plans */}
         <div className="space-y-3">
-          <h4 className="font-medium">Selecione um Plano de Trade:</h4>
+          <h4 className="font-medium">Select a Trade Plan:</h4>
           {allPlans.map((plan, index) => {
             const planId = `${plan.direction}-${index}`;
             const isSelected = selectedPlan === planId;
@@ -127,7 +127,7 @@ export function PositionSizingCard({ analysis, currentPrice }: PositionSizingCar
                       variant={plan.direction === 'buy' ? 'default' : 'destructive'}
                       className="text-xs"
                     >
-                      {plan.direction === 'buy' ? '🟢 COMPRA' : '🔴 VENDA'}
+                      {plan.direction === 'buy' ? '🟢 BUY' : '🔴 SELL'}
                     </Badge>
                     <Badge variant="outline" className="text-xs">
                       R/R: {plan.riskReward.toFixed(1)}
@@ -140,7 +140,7 @@ export function PositionSizingCard({ analysis, currentPrice }: PositionSizingCar
 
                 <div className="grid grid-cols-3 gap-2 text-xs">
                   <div>
-                    <span className="text-muted-foreground">Entrada:</span>
+                    <span className="text-muted-foreground">Entry:</span>
                     <div className="font-medium">${plan.entry.toFixed(0)}</div>
                   </div>
                   <div>
@@ -159,7 +159,7 @@ export function PositionSizingCard({ analysis, currentPrice }: PositionSizingCar
                       <div className="flex items-center gap-2">
                         <DollarSign className="h-4 w-4 text-green-500" />
                         <div>
-                          <div className="text-xs text-muted-foreground">Valor em Risco</div>
+                          <div className="text-xs text-muted-foreground">Risk Amount</div>
                           <div className="font-medium text-sm">
                             {formatCurrency(calculation.riskAmount)}
                           </div>
@@ -168,7 +168,7 @@ export function PositionSizingCard({ analysis, currentPrice }: PositionSizingCar
                       <div className="flex items-center gap-2">
                         <DollarSign className="h-4 w-4 text-blue-500" />
                         <div>
-                          <div className="text-xs text-muted-foreground">Tamanho da Posição</div>
+                          <div className="text-xs text-muted-foreground">Position Size</div>
                           <div className="font-medium text-sm">
                             {formatCurrency(calculation.positionSizeUSD)}
                           </div>
@@ -177,7 +177,7 @@ export function PositionSizingCard({ analysis, currentPrice }: PositionSizingCar
                       <div className="flex items-center gap-2">
                         <Bitcoin className="h-4 w-4 text-orange-500" />
                         <div>
-                          <div className="text-xs text-muted-foreground">Em BTC</div>
+                          <div className="text-xs text-muted-foreground">In BTC</div>
                           <div className="font-medium text-sm">
                             {formatBTC(calculation.positionSizeBTC)}
                           </div>
@@ -202,7 +202,7 @@ export function PositionSizingCard({ analysis, currentPrice }: PositionSizingCar
 
         {allPlans.length === 0 && (
           <p className="text-muted-foreground text-center py-4">
-            Nenhum plano de trade disponível para esta análise.
+            No trade plans available for this analysis.
           </p>
         )}
       </CardContent>

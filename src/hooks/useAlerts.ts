@@ -61,8 +61,8 @@ export const useAlerts = (analysis: SMCAnalysis | null, currentPrice: number) =>
           
           if (distance <= 0.5) { // 0.5% threshold
             toast({
-              title: "🚨 Zona Crítica Alcançada!",
-              description: `Preço se aproximou da ${alert.zoneName} (${alert.zonePrice.toFixed(0)})`,
+              title: "🚨 Critical Zone Reached!",
+              description: `Price approached ${alert.zoneName} (${alert.zonePrice.toFixed(0)})`,
             });
             
             return { ...alert, triggered: true };

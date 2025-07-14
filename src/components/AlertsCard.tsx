@@ -62,13 +62,7 @@ export function AlertsCard({ analysis, currentPrice }: AlertsCardProps) {
           return (
             <div
               key={alert.id}
-              className={`flex items-center justify-between p-3 rounded-lg border ${
-                alert.triggered
-                  ? 'bg-green-50 border-green-200 dark:bg-green-950 dark:border-green-800'
-                  : isNear && alert.isActive
-                  ? 'bg-blue-50 border-blue-200 dark:bg-blue-950 dark:border-blue-800'
-                  : 'bg-muted/50'
-              }`}
+              className="flex items-center justify-between p-3 rounded-lg border bg-muted/50"
             >
               <div className="flex-1">
                 <div className="flex items-center gap-2 mb-1">

@@ -134,7 +134,7 @@ export function MultiTimeframeAnalysis({ currentTimeframe }: MultiTimeframeAnaly
       </CardHeader>
       <CardContent className="space-y-4">
         {confluences.length > 0 && (
-          <div className="p-3 bg-blue-50 dark:bg-blue-950 rounded-lg border border-blue-200 dark:border-blue-800">
+          <div className="p-3 rounded-lg border">
             <h4 className="font-medium mb-2">🎯 Confluences Detected</h4>
             {confluences.map((confluence, index) => (
               <Badge

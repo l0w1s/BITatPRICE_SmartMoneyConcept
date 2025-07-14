@@ -123,7 +123,7 @@ export const AboutModal: React.FC<AboutModalProps> = ({ isOpen, onClose }) => {
                 <div>
                   <Badge className="mb-2 bg-gray-500 text-white">📊 WEAK</Badge>
                   <p className="text-sm text-muted-foreground">
-                    Basic zones without major confluences. Distance from price &gt;3%. Lower reliability.
+                    Basic zones without major confluences. Distance from price {'>'} 3%. Lower reliability.
                   </p>
                 </div>
               </div>
@@ -393,26 +393,68 @@ export const AboutModal: React.FC<AboutModalProps> = ({ isOpen, onClose }) => {
                   </div>
                 </div>
                 
-                <div className="flex items-start gap-3 p-3 rounded-lg bg-orange-500/10 border border-orange-500/30">
-                  <Zap className="w-5 h-5 text-orange-500 mt-0.5" />
-                  <div>
-                    <Badge className="mb-2 bg-orange-500 text-white">⚙️ Advanced Settings</Badge>
-                    <p className="text-sm text-muted-foreground">
-                      Customize analysis parameters, default account settings, auto-refresh intervals, and theme preferences. Save your configurations for consistent experience.
-                    </p>
-                  </div>
-                </div>
-              </div>
-              
-              <div className="p-3 rounded-lg bg-muted/30">
-                <p className="text-sm font-medium mb-1">💡 Pro Tips:</p>
-                <ul className="text-xs text-muted-foreground space-y-1">
-                  <li>• Use alerts to catch price movements while away from charts</li>
-                  <li>• Check multi-timeframe confluences for higher probability setups</li>
-                  <li>• Always calculate position sizes before entering trades</li>
-                  <li>• Review performance history to improve your analysis skills</li>
-                </ul>
-              </div>
+                 <div className="flex items-start gap-3 p-3 rounded-lg bg-orange-500/10 border border-orange-500/30">
+                   <Zap className="w-5 h-5 text-orange-500 mt-0.5" />
+                   <div>
+                     <Badge className="mb-2 bg-orange-500 text-white">⚙️ Advanced Settings</Badge>
+                     <p className="text-sm text-muted-foreground">
+                       Customize analysis parameters, default account settings, auto-refresh intervals (30s-5min), and theme preferences. Enable/disable auto-refresh and set default timeframes.
+                     </p>
+                   </div>
+                 </div>
+               </div>
+               
+               <div className="bg-muted/50 p-4 rounded-lg border-l-4 border-l-primary">
+                 <h4 className="font-medium mb-2">📊 How to Read Zone Classifications</h4>
+                 <ul className="space-y-2 text-sm text-muted-foreground">
+                   <li>• <strong>Zone Strength:</strong> 💪 Strong (high volume reaction), 🔥 Moderate (good reaction), ⚡ Weak (limited reaction)</li>
+                   <li>• <strong>Zone Age:</strong> 🆕 Fresh (recently formed), 🕐 Recent (1-5 candles old), 🕰️ Old (5+ candles old)</li>
+                   <li>• <strong>Test Status:</strong> ✅ Tested zones have been touched before, ❌ Untested zones are pristine</li>
+                   <li>• <strong>Distance:</strong> Shows percentage distance from current price to zone levels</li>
+                 </ul>
+               </div>
+               
+               <div className="bg-muted/50 p-4 rounded-lg border-l-4 border-l-accent">
+                 <h4 className="font-medium mb-2">⚡ Multi-Timeframe Analysis Guide</h4>
+                 <ul className="space-y-2 text-sm text-muted-foreground">
+                   <li>• <strong>Confluences:</strong> When multiple timeframes show the same bias (all bullish or bearish)</li>
+                   <li>• <strong>Divergences:</strong> When timeframes disagree - use higher timeframe bias as primary direction</li>
+                   <li>• <strong>Best Entries:</strong> Look for confluences between your selected timeframe and higher timeframes</li>
+                   <li>• <strong>Trend Hierarchy:</strong> Daily {'>'} 4H {'>'} 1H {'>'} 15M (higher timeframes have more weight)</li>
+                 </ul>
+               </div>
+               
+               <div className="bg-muted/50 p-4 rounded-lg border-l-4 border-l-destructive">
+                 <h4 className="font-medium mb-2">💰 Position Sizing & Risk Management</h4>
+                 <ul className="space-y-2 text-sm text-muted-foreground">
+                   <li>• <strong>2% Rule:</strong> Never risk more than 2% of your account on a single trade</li>
+                   <li>• <strong>Position Size Formula:</strong> (Account × Risk%) ÷ (Entry Price - Stop Loss) = Position Size</li>
+                   <li>• <strong>Risk/Reward:</strong> Always aim for minimum 1:2 R:R (risk $1 to make $2)</li>
+                   <li>• <strong>Stop Loss Placement:</strong> Place stops beyond the nearest opposing zone (supply for longs, demand for shorts)</li>
+                 </ul>
+               </div>
+               
+               <div className="bg-muted/50 p-4 rounded-lg border-l-4 border-l-secondary">
+                 <h4 className="font-medium mb-2">🔔 Alert System Guide</h4>
+                 <ul className="space-y-2 text-sm text-muted-foreground">
+                   <li>• <strong>Critical Distance:</strong> Alerts trigger when price is within 0.5% of zone levels</li>
+                   <li>• <strong>Zone Status:</strong> Green = triggered, Blue = near (approaching), Gray = inactive</li>
+                   <li>• <strong>Toggle Control:</strong> Click the switch to enable/disable alerts for specific zones</li>
+                   <li>• <strong>Browser Notifications:</strong> Make sure to allow notifications for real-time alerts</li>
+                 </ul>
+               </div>
+               
+               <div className="p-3 rounded-lg bg-muted/30">
+                 <p className="text-sm font-medium mb-1">💡 Pro Tips:</p>
+                 <ul className="text-xs text-muted-foreground space-y-1">
+                   <li>• Use alerts to catch price movements while away from charts</li>
+                   <li>• Check multi-timeframe confluences for higher probability setups</li>
+                   <li>• Always calculate position sizes before entering trades</li>
+                   <li>• Review performance history to improve your analysis skills</li>
+                   <li>• Focus on confluences: when multiple timeframes and zones align</li>
+                   <li>• Use desktop layout to compare zones and FVGs side-by-side</li>
+                 </ul>
+               </div>
             </div>
           </section>
 

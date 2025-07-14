@@ -11,6 +11,7 @@ import { Card } from '@/components/ui/card';
 import { Copy, Check, Heart } from 'lucide-react';
 import { BitcoinIcon } from './BitcoinIcon';
 import { useToast } from '@/hooks/use-toast';
+import bitcoinQRCode from '@/assets/bitcoin-qr.png';
 
 interface DonateModalProps {
   isOpen: boolean;
@@ -55,10 +56,22 @@ export const DonateModal: React.FC<DonateModalProps> = ({ isOpen, onClose }) => 
         </DialogHeader>
 
         <div className="space-y-6">
-          <div className="text-center space-y-3">
+          <div className="text-center space-y-4">
             <div className="flex justify-center">
               <BitcoinIcon className="w-16 h-16 text-primary" />
             </div>
+            
+            {/* QR Code */}
+            <div className="flex justify-center">
+              <div className="p-4 bg-white rounded-xl border-2 border-border">
+                <img 
+                  src={bitcoinQRCode} 
+                  alt="Bitcoin QR Code" 
+                  className="w-32 h-32"
+                />
+              </div>
+            </div>
+            
             <p className="text-sm text-muted-foreground">
               Your donations help keep Sir BAP AI always updated 
               and with new features!
@@ -73,7 +86,7 @@ export const DonateModal: React.FC<DonateModalProps> = ({ isOpen, onClose }) => 
               </div>
               
               <div className="p-3 bg-background rounded-lg border">
-                <code className="text-xs font-mono break-all text-foreground">
+                <code className="text-[10px] sm:text-xs font-mono break-all text-foreground leading-tight">
                   {bitcoinAddress}
                 </code>
               </div>

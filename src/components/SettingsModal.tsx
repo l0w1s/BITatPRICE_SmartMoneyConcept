@@ -251,6 +251,20 @@ export function SettingsModal({ onSettingsChange }: SettingsModalProps) {
                 </SelectContent>
               </Select>
             </div>
+
+            <div className="flex items-center justify-between">
+              <div className="space-y-0.5">
+                <Label htmlFor="debugMode">Debug Mode</Label>
+                <p className="text-sm text-muted-foreground">
+                  Show detailed analysis information and zone statistics
+                </p>
+              </div>
+              <Switch
+                id="debugMode"
+                checked={settings.debugMode}
+                onCheckedChange={(checked) => updateSetting('debugMode', checked)}
+              />
+            </div>
           </div>
 
           <Separator />

@@ -18,6 +18,7 @@ export interface EnhancedZone extends Zone {
   distance: number;
   tested: boolean;
   formationIndex: number;
+  confluence?: boolean;
 }
 
 export interface TradePlan {
@@ -50,10 +51,30 @@ export interface SMCAnalysis extends MarketStructure {
   supplyZones: EnhancedZone[];
   bullishFVGs: EnhancedZone[];
   bearishFVGs: EnhancedZone[];
+  confluences?: ConfluenceZone[];
+  debugInfo?: DebugInfo;
+}
+
+export interface ConfluenceZone {
+  type: 'fibonacci' | 'historical_sr' | 'multiple_zones';
+  level: number;
+  strength: 'STRONG' | 'MODERATE' | 'WEAK';
+  description: string;
+}
+
+export interface DebugInfo {
+  totalZonesFound: number;
+  zonesFiltered: number;
+  searchRange: number;
+  profileUsed: string;
+  testedZones: number;
+  untestedZones: number;
+  averageZoneDistance: number;
 }
 
 export class SMCAnalyzer {
   static analyze(candles: Candle[], timeframe: string): SMCAnalysis | { error: string } {
+    const settings = getSettings();
     const lookbackMap: Record<string, number> = { 
       '15m': 3, 
       '30m': 4, 
@@ -78,7 +99,7 @@ export class SMCAnalyzer {
     }
     
     const currentPrice = candles[candles.length - 1].c;
-    const pois = this._findEnhancedPointsOfInterest(candles, structure, currentPrice);
+    const pois = this._findEnhancedPointsOfInterest(candles, structure, currentPrice, timeframe);
     
     const analysis: SMCAnalysis = {
       ...structure,
@@ -91,6 +112,14 @@ export class SMCAnalyzer {
       buyPlans: [],
       sellPlans: []
     };
+    
+    // Add confluence detection
+    analysis.confluences = this._detectConfluences(analysis, candles);
+    
+    // Add debug info if enabled
+    if (settings.debugMode) {
+      analysis.debugInfo = pois.debugInfo;
+    }
     
     analysis.buyPlans = this._createMultipleTradePlans(analysis, 'buy');
     analysis.sellPlans = this._createMultipleTradePlans(analysis, 'sell');
@@ -230,30 +259,46 @@ export class SMCAnalyzer {
     return 'WEAK';
   }
 
-  private static _findEnhancedPointsOfInterest(candles: Candle[], structure: MarketStructure, currentPrice: number) {
+  private static _findEnhancedPointsOfInterest(candles: Candle[], structure: MarketStructure, currentPrice: number, timeframe: string) {
     const { majorHigh, majorLow } = structure;
-    if (!majorHigh || !majorLow) return { demandZones: [], supplyZones: [], bullishFVGs: [], bearishFVGs: [] };
+    if (!majorHigh || !majorLow) return { 
+      demandZones: [], supplyZones: [], bullishFVGs: [], bearishFVGs: [],
+      debugInfo: { totalZonesFound: 0, zonesFiltered: 0, searchRange: 0, profileUsed: 'unknown', testedZones: 0, untestedZones: 0, averageZoneDistance: 0 }
+    };
+    
+    const settings = getSettings();
+    const profile = settings.tradingProfile;
     
     const rangeStart = Math.min(majorLow.price, majorHigh.price);
     const rangeEnd = Math.max(majorLow.price, majorHigh.price);
     const fib50 = rangeStart + (rangeEnd - rangeStart) * 0.5;
+    const fib236 = rangeStart + (rangeEnd - rangeStart) * 0.236;
+    const fib618 = rangeStart + (rangeEnd - rangeStart) * 0.618;
+    const fib786 = rangeStart + (rangeEnd - rangeStart) * 0.786;
     
     const demandZones: EnhancedZone[] = [];
     const supplyZones: EnhancedZone[] = [];
     const bullishFVGs: EnhancedZone[] = [];
     const bearishFVGs: EnhancedZone[] = [];
     
-    // Expandir range de busca para incluir mais dados históricos
-    const searchRange = Math.min(candles.length - 1, 100);
+    // Adaptive search range based on profile and timeframe
+    const searchRange = this._getAdaptiveSearchRange(profile, timeframe, candles.length);
     const startSearch = Math.max(0, candles.length - searchRange);
+    
+    let totalZonesFound = 0;
+    let testedCount = 0;
     
     for (let i = startSearch; i < candles.length - 1; i++) {
       const candle = candles[i];
       const prevCandle = i > 0 ? candles[i - 1] : null;
       const nextCandle = i < candles.length - 1 ? candles[i + 1] : null;
       
-      // Zonas de Demanda (Discount Area)
-      if (candle.h < fib50 && candle.c < candle.o) {
+      // Enhanced zone detection with better criteria
+      const hasStrongRejection = this._hasStrongReaction(candles, i);
+      const bodyPercentage = Math.abs(candle.c - candle.o) / (candle.h - candle.l);
+      
+      // Zonas de Demanda (Discount Area) - Enhanced criteria
+      if (candle.h < fib50 && candle.c < candle.o && bodyPercentage > 0.6 && hasStrongRejection) {
         const zone: EnhancedZone = {
           low: candle.l,
           high: candle.h,
@@ -264,10 +309,11 @@ export class SMCAnalyzer {
           formationIndex: i
         };
         demandZones.push(zone);
+        totalZonesFound++;
       }
       
-      // Zonas de Supply (Premium Area)
-      if (candle.l > fib50 && candle.c > candle.o) {
+      // Zonas de Supply (Premium Area) - Enhanced criteria
+      if (candle.l > fib50 && candle.c > candle.o && bodyPercentage > 0.6 && hasStrongRejection) {
         const zone: EnhancedZone = {
           low: candle.l,
           high: candle.h,
@@ -278,6 +324,7 @@ export class SMCAnalyzer {
           formationIndex: i
         };
         supplyZones.push(zone);
+        totalZonesFound++;
       }
       
       // Bullish FVGs
@@ -309,21 +356,48 @@ export class SMCAnalyzer {
       }
     }
     
-    // Ordenar por força e manter apenas as melhores
+    // Count tested zones
+    const allZones = [...demandZones, ...supplyZones, ...bullishFVGs, ...bearishFVGs];
+    testedCount = allZones.filter(zone => zone.tested).length;
+    totalZonesFound = allZones.length;
+    
+    // Calculate average distance
+    const avgDistance = allZones.length > 0 ? 
+      allZones.reduce((sum, zone) => sum + zone.distance, 0) / allZones.length : 0;
+    
+    // Enhanced confluence detection for zones
+    this._enhanceZonesWithConfluence(demandZones, fib236, fib50, fib618, fib786);
+    this._enhanceZonesWithConfluence(supplyZones, fib236, fib50, fib618, fib786);
+    
+    // Ordenar por força, confluência e proximidade
     const sortByStrengthAndProximity = (zones: EnhancedZone[]) => 
       zones.sort((a, b) => {
         const strengthOrder = { STRONG: 3, MODERATE: 2, WEAK: 1 };
-        if (strengthOrder[a.strength] !== strengthOrder[b.strength]) {
-          return strengthOrder[b.strength] - strengthOrder[a.strength];
+        const aScore = strengthOrder[a.strength] + (a.confluence ? 2 : 0);
+        const bScore = strengthOrder[b.strength] + (b.confluence ? 2 : 0);
+        
+        if (aScore !== bScore) {
+          return bScore - aScore;
         }
         return a.distance - b.distance;
       }).slice(0, 3);
+    
+    const debugInfo: DebugInfo = {
+      totalZonesFound,
+      zonesFiltered: totalZonesFound - Math.min(totalZonesFound, 12), // 3 per type max
+      searchRange,
+      profileUsed: profile,
+      testedZones: testedCount,
+      untestedZones: totalZonesFound - testedCount,
+      averageZoneDistance: Number(avgDistance.toFixed(2))
+    };
     
     return {
       demandZones: sortByStrengthAndProximity(demandZones),
       supplyZones: sortByStrengthAndProximity(supplyZones),
       bullishFVGs: sortByStrengthAndProximity(bullishFVGs),
-      bearishFVGs: sortByStrengthAndProximity(bearishFVGs)
+      bearishFVGs: sortByStrengthAndProximity(bearishFVGs),
+      debugInfo
     };
   }
   
@@ -609,5 +683,168 @@ export class SMCAnalyzer {
     if (score >= 6) return 'STRONG';
     if (score >= 4) return 'MODERATE';
     return 'WEAK';
+  }
+
+  private static _getAdaptiveSearchRange(profile: string, timeframe: string, totalCandles: number): number {
+    const baseRanges = {
+      scalp: { '15m': 50, '30m': 75, '1h': 100, '4h': 150, '1d': 200 },
+      balanced: { '15m': 100, '30m': 150, '1h': 200, '4h': 300, '1d': 400 },
+      swing: { '15m': 200, '30m': 300, '1h': 400, '4h': 500, '1d': 600 }
+    };
+    
+    const profileRanges = baseRanges[profile as keyof typeof baseRanges] || baseRanges.balanced;
+    const baseRange = profileRanges[timeframe as keyof typeof profileRanges] || 200;
+    
+    return Math.min(baseRange, totalCandles - 1);
+  }
+
+  private static _hasStrongReaction(candles: Candle[], index: number): boolean {
+    if (index < 2 || index >= candles.length - 2) return false;
+    
+    const currentCandle = candles[index];
+    const nextCandle = candles[index + 1];
+    const nextNextCandle = candles[index + 2];
+    
+    // Check for strong bullish reaction (for supply zones)
+    const strongBullishReaction = 
+      nextCandle.c > nextCandle.o && 
+      nextNextCandle.c > nextNextCandle.o &&
+      nextCandle.c > currentCandle.h;
+    
+    // Check for strong bearish reaction (for demand zones)
+    const strongBearishReaction = 
+      nextCandle.c < nextCandle.o && 
+      nextNextCandle.c < nextNextCandle.o &&
+      nextCandle.c < currentCandle.l;
+    
+    return strongBullishReaction || strongBearishReaction;
+  }
+
+  private static _enhanceZonesWithConfluence(zones: EnhancedZone[], fib236: number, fib50: number, fib618: number, fib786: number): void {
+    const fibLevels = [fib236, fib50, fib618, fib786];
+    
+    zones.forEach(zone => {
+      const zoneMid = (zone.high + zone.low) / 2;
+      
+      // Check if zone is near fibonacci levels (within 1% tolerance)
+      const nearFib = fibLevels.some(fibLevel => {
+        const distance = Math.abs(zoneMid - fibLevel) / fibLevel;
+        return distance <= 0.01; // 1% tolerance
+      });
+      
+      if (nearFib) {
+        zone.confluence = true;
+      }
+    });
+  }
+
+  private static _detectConfluences(analysis: SMCAnalysis, candles: Candle[]): ConfluenceZone[] {
+    const confluences: ConfluenceZone[] = [];
+    const { majorHigh, majorLow } = analysis;
+    
+    if (!majorHigh || !majorLow) return confluences;
+    
+    const rangeStart = Math.min(majorLow.price, majorHigh.price);
+    const rangeEnd = Math.max(majorLow.price, majorHigh.price);
+    
+    // Fibonacci confluences
+    const fibLevels = [
+      { level: rangeStart + (rangeEnd - rangeStart) * 0.236, name: '23.6%' },
+      { level: rangeStart + (rangeEnd - rangeStart) * 0.382, name: '38.2%' },
+      { level: rangeStart + (rangeEnd - rangeStart) * 0.5, name: '50%' },
+      { level: rangeStart + (rangeEnd - rangeStart) * 0.618, name: '61.8%' },
+      { level: rangeStart + (rangeEnd - rangeStart) * 0.786, name: '78.6%' }
+    ];
+    
+    fibLevels.forEach(fib => {
+      const nearbyZones = [
+        ...analysis.demandZones,
+        ...analysis.supplyZones
+      ].filter(zone => {
+        const zoneMid = (zone.high + zone.low) / 2;
+        const distance = Math.abs(zoneMid - fib.level) / fib.level;
+        return distance <= 0.02; // 2% tolerance
+      });
+      
+      if (nearbyZones.length > 0) {
+        confluences.push({
+          type: 'fibonacci',
+          level: fib.level,
+          strength: nearbyZones.length > 1 ? 'STRONG' : 'MODERATE',
+          description: `Fibonacci ${fib.name} confluence with ${nearbyZones.length} zone(s)`
+        });
+      }
+    });
+    
+    // Historical S/R confluences (simplified)
+    const historicalLevels = this._findHistoricalSR(candles);
+    historicalLevels.forEach(level => {
+      const nearbyZones = [
+        ...analysis.demandZones,
+        ...analysis.supplyZones
+      ].filter(zone => {
+        const zoneMid = (zone.high + zone.low) / 2;
+        const distance = Math.abs(zoneMid - level.price) / level.price;
+        return distance <= 0.015; // 1.5% tolerance
+      });
+      
+      if (nearbyZones.length > 0) {
+        confluences.push({
+          type: 'historical_sr',
+          level: level.price,
+          strength: level.strength,
+          description: `Historical ${level.type} level confluence`
+        });
+      }
+    });
+    
+    return confluences.slice(0, 5); // Limit to top 5 confluences
+  }
+
+  private static _findHistoricalSR(candles: Candle[]): Array<{price: number, type: string, strength: 'STRONG' | 'MODERATE' | 'WEAK'}> {
+    const levels: Array<{price: number, type: string, strength: 'STRONG' | 'MODERATE' | 'WEAK'}> = [];
+    const searchRange = Math.min(candles.length, 200);
+    const startIndex = Math.max(0, candles.length - searchRange);
+    
+    // Find significant highs and lows that acted as S/R
+    for (let i = startIndex + 10; i < candles.length - 10; i++) {
+      const candle = candles[i];
+      let touchCount = 0;
+      
+      // Count how many times price tested this level
+      for (let j = i + 1; j < candles.length; j++) {
+        const testCandle = candles[j];
+        const distance = Math.abs(testCandle.h - candle.h) / candle.h;
+        const distance2 = Math.abs(testCandle.l - candle.l) / candle.l;
+        
+        if (distance <= 0.01 || distance2 <= 0.01) {
+          touchCount++;
+        }
+      }
+      
+      if (touchCount >= 2) {
+        const strength = touchCount >= 4 ? 'STRONG' : touchCount >= 3 ? 'MODERATE' : 'WEAK';
+        levels.push({
+          price: candle.h,
+          type: 'resistance',
+          strength
+        });
+        levels.push({
+          price: candle.l,
+          type: 'support',
+          strength
+        });
+      }
+    }
+    
+    // Remove duplicates and sort by strength
+    const uniqueLevels = levels.filter((level, index, arr) => 
+      arr.findIndex(l => Math.abs(l.price - level.price) / level.price <= 0.005) === index
+    );
+    
+    return uniqueLevels.sort((a, b) => {
+      const strengthOrder = { STRONG: 3, MODERATE: 2, WEAK: 1 };
+      return strengthOrder[b.strength] - strengthOrder[a.strength];
+    }).slice(0, 10);
   }
 }

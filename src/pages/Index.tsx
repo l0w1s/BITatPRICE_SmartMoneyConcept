@@ -9,6 +9,7 @@ import { PriceDisplay } from '@/components/PriceDisplay';
 import { BiasCard } from '@/components/BiasCard';
 import { TradePlans } from '@/components/TradePlans';
 import { ZonesCard } from '@/components/ZonesCard';
+import { DebugCard } from '@/components/DebugCard';
 import { AboutModal } from '@/components/AboutModal';
 import { DonateModal } from '@/components/DonateModal';
 import { AlertsCard } from '@/components/AlertsCard';
@@ -234,6 +235,11 @@ const Index = () => {
               <AlertsCard analysis={analysis} currentPrice={currentPrice} />
               <PositionSizingCard analysis={analysis} currentPrice={currentPrice} />
             </div>
+
+            {/* Debug Information */}
+            {(settings.debugMode && (analysis.debugInfo || analysis.confluences)) && (
+              <DebugCard analysis={analysis} />
+            )}
 
             <div className="grid gap-6 lg:grid-cols-2">
               <MultiTimeframeAnalysis currentTimeframe={timeframe} />

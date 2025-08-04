@@ -9,6 +9,7 @@ export interface UserSettings {
   riskPercentage: number;
   accountSize: number;
   tradingProfile: 'scalp' | 'balanced' | 'swing';
+  debugMode: boolean;
 }
 
 const DEFAULT_SETTINGS: UserSettings = {
@@ -21,7 +22,8 @@ const DEFAULT_SETTINGS: UserSettings = {
   defaultTimeframe: '1h',
   riskPercentage: 2,
   accountSize: 10000,
-  tradingProfile: 'balanced'
+  tradingProfile: 'balanced',
+  debugMode: false
 };
 
 export const getSettings = (): UserSettings => {

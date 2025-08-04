@@ -1,4 +1,5 @@
 import { Candle } from './api';
+import { getSettings } from '../utils/storage';
 
 export interface SwingPoint {
   type: 'high' | 'low';
@@ -379,10 +380,48 @@ export class SMCAnalyzer {
   }
   
   private static _isZoneTested(zone: Candle, candles: Candle[], formationIndex: number): boolean {
-    for (let i = formationIndex + 1; i < candles.length; i++) {
+    const settings = getSettings();
+    const profile = settings.tradingProfile;
+    
+    // More strict testing criteria based on profile
+    let penetrationThreshold = 0.3; // 30% penetration required
+    let minReactionCandles = 1;
+    
+    if (profile === 'swing') {
+      penetrationThreshold = 0.5; // 50% penetration for conservative
+      minReactionCandles = 2;
+    } else if (profile === 'scalp') {
+      penetrationThreshold = 0.15; // 15% penetration for aggressive
+      minReactionCandles = 1;
+    }
+    
+    const zoneHeight = zone.h - zone.l;
+    let validTests = 0;
+    
+    for (let i = formationIndex + 1; i < candles.length - minReactionCandles; i++) {
       const candle = candles[i];
-      if (candle.l <= zone.h && candle.h >= zone.l) {
-        return true;
+      const overlap = Math.min(candle.h, zone.h) - Math.max(candle.l, zone.l);
+      
+      if (overlap > 0) {
+        const penetration = overlap / zoneHeight;
+        
+        // Check if penetration is significant enough
+        if (penetration >= penetrationThreshold) {
+          // Check for reaction in next candle(s)
+          let hasReaction = false;
+          for (let j = 1; j <= minReactionCandles && i + j < candles.length; j++) {
+            const nextCandle = candles[i + j];
+            // For demand zones, look for bullish reaction; for supply zones, bearish reaction
+            if ((zone.l < zone.h && nextCandle.c > nextCandle.o) || 
+                (zone.l > zone.h && nextCandle.c < nextCandle.o)) {
+              hasReaction = true;
+              break;
+            }
+          }
+          
+          if (hasReaction) validTests++;
+          if (validTests >= (profile === 'scalp' ? 1 : 2)) return true;
+        }
       }
     }
     return false;
@@ -399,17 +438,65 @@ export class SMCAnalyzer {
   }
   
   private static _createMultipleTradePlans(analysis: SMCAnalysis, type: 'buy' | 'sell'): TradePlan[] {
+    const settings = getSettings();
+    const profile = settings.tradingProfile;
     const { bias, demandZones, supplyZones, majorHigh, majorLow } = analysis;
     const plans: TradePlan[] = [];
     
+    // Profile-specific parameters
+    const profileConfig = {
+      scalp: {
+        minRR: 0.3,
+        maxRR: 1.5,
+        maxPlans: 5,
+        preferClose: true,
+        maxDistance: 3.0,
+        testedWeight: 0.7 // Less penalty for tested zones
+      },
+      balanced: {
+        minRR: 1.0,
+        maxRR: 3.0,
+        maxPlans: 3,
+        preferClose: false,
+        maxDistance: 7.0,
+        testedWeight: 0.5
+      },
+      swing: {
+        minRR: 2.0,
+        maxRR: 10.0,
+        maxPlans: 2,
+        preferClose: false,
+        maxDistance: 15.0,
+        testedWeight: 0.2 // Heavy penalty for tested zones
+      }
+    };
+    
+    const config = profileConfig[profile];
+    
     if (type === 'buy' && bias === 'BULLISH' && majorHigh) {
-      demandZones.slice(0, 2).forEach((zone, index) => {
+      let validZones = demandZones.filter(zone => 
+        zone.distance <= config.maxDistance &&
+        (!zone.tested || config.testedWeight > 0.3)
+      );
+      
+      // Sort by profile preference
+      if (config.preferClose) {
+        validZones.sort((a, b) => a.distance - b.distance);
+      } else {
+        validZones.sort((a, b) => {
+          const scoreA = this._calculateZoneScore(a, config);
+          const scoreB = this._calculateZoneScore(b, config);
+          return scoreB - scoreA;
+        });
+      }
+      
+      validZones.slice(0, config.maxPlans).forEach((zone, index) => {
         const entryPrice = zone.high;
         const stopPrice = zone.low;
         const targetPrice = majorHigh.price;
         const riskReward = (targetPrice - entryPrice) / (entryPrice - stopPrice);
         
-        if (riskReward > 0.5) {
+        if (riskReward >= config.minRR && riskReward <= config.maxRR) {
           const planStrength = this._calculatePlanStrength(zone, riskReward);
           const explanation = `${index === 0 ? 'Primary' : 'Alternative'} buy setup in a ${bias.toLowerCase()} structure. Entry at demand zone (${zone.strength.toLowerCase()} strength, ${zone.age.toLowerCase()} formation) ${zone.distance.toFixed(1)}% from current price. ${zone.tested ? 'Zone previously tested.' : 'Fresh untested zone.'} R/R: ${riskReward.toFixed(2)}`;
           
@@ -428,13 +515,29 @@ export class SMCAnalyzer {
     }
     
     if (type === 'sell' && bias === 'BEARISH' && majorLow) {
-      supplyZones.slice(0, 2).forEach((zone, index) => {
+      let validZones = supplyZones.filter(zone => 
+        zone.distance <= config.maxDistance &&
+        (!zone.tested || config.testedWeight > 0.3)
+      );
+      
+      // Sort by profile preference
+      if (config.preferClose) {
+        validZones.sort((a, b) => a.distance - b.distance);
+      } else {
+        validZones.sort((a, b) => {
+          const scoreA = this._calculateZoneScore(a, config);
+          const scoreB = this._calculateZoneScore(b, config);
+          return scoreB - scoreA;
+        });
+      }
+      
+      validZones.slice(0, config.maxPlans).forEach((zone, index) => {
         const entryPrice = zone.low;
         const stopPrice = zone.high;
         const targetPrice = majorLow.price;
         const riskReward = (entryPrice - targetPrice) / (stopPrice - entryPrice);
         
-        if (riskReward > 0.5) {
+        if (riskReward >= config.minRR && riskReward <= config.maxRR) {
           const planStrength = this._calculatePlanStrength(zone, riskReward);
           const explanation = `${index === 0 ? 'Primary' : 'Alternative'} sell setup in a ${bias.toLowerCase()} structure. Entry at supply zone (${zone.strength.toLowerCase()} strength, ${zone.age.toLowerCase()} formation) ${zone.distance.toFixed(1)}% from current price. ${zone.tested ? 'Zone previously tested.' : 'Fresh untested zone.'} R/R: ${riskReward.toFixed(2)}`;
           
@@ -453,6 +556,34 @@ export class SMCAnalyzer {
     }
     
     return plans;
+  }
+  
+  private static _calculateZoneScore(zone: EnhancedZone, config: any): number {
+    let score = 0;
+    
+    // Strength scoring
+    if (zone.strength === 'STRONG') score += 30;
+    else if (zone.strength === 'MODERATE') score += 20;
+    else score += 10;
+    
+    // Age scoring
+    if (zone.age === 'FRESH') score += 20;
+    else if (zone.age === 'RECENT') score += 15;
+    else score += 5;
+    
+    // Distance scoring (closer gets bonus for scalp, further for swing)
+    if (config.preferClose) {
+      score += Math.max(0, 20 - zone.distance * 2);
+    } else {
+      score += zone.distance > 2 ? 15 : 5;
+    }
+    
+    // Tested penalty
+    if (zone.tested) {
+      score *= config.testedWeight;
+    }
+    
+    return score;
   }
   
   private static _calculatePlanStrength(zone: EnhancedZone, riskReward: number): 'STRONG' | 'MODERATE' | 'WEAK' {

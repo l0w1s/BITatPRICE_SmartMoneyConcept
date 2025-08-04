@@ -114,6 +114,27 @@ export function SettingsModal({ onSettingsChange }: SettingsModalProps) {
             </div>
 
             <div className="space-y-2">
+              <Label htmlFor="trading-profile">Trading Profile</Label>
+              <Select 
+                value={settings.tradingProfile} 
+                onValueChange={(value: 'scalp' | 'balanced' | 'swing') => updateSetting('tradingProfile', value)}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="scalp">🔥 Scalp/Aggressive (R/R: 0.3-1.5, Close zones)</SelectItem>
+                  <SelectItem value="balanced">⚖️ Balanced/Medium (R/R: 1.0-3.0, Mixed zones)</SelectItem>
+                  <SelectItem value="swing">🛡️ Swing/Conservative (R/R: 2.0+, Quality zones)</SelectItem>
+                </SelectContent>
+              </Select>
+              <p className="text-xs text-muted-foreground">
+                Scalp: Fast trades, close zones, accepts tested zones. 
+                Swing: High probability, distant zones, avoids tested zones.
+              </p>
+            </div>
+
+            <div className="space-y-2">
               <Label htmlFor="default-timeframe">Default Timeframe</Label>
               <Select 
                 value={settings.defaultTimeframe} 

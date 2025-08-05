@@ -273,6 +273,7 @@ export class SMCAnalyzer {
     const rangeEnd = Math.max(majorLow.price, majorHigh.price);
     const fib50 = rangeStart + (rangeEnd - rangeStart) * 0.5;
     const fib236 = rangeStart + (rangeEnd - rangeStart) * 0.236;
+    const fib382 = rangeStart + (rangeEnd - rangeStart) * 0.382;
     const fib618 = rangeStart + (rangeEnd - rangeStart) * 0.618;
     const fib786 = rangeStart + (rangeEnd - rangeStart) * 0.786;
     
@@ -288,17 +289,25 @@ export class SMCAnalyzer {
     let totalZonesFound = 0;
     let testedCount = 0;
     
+    // Relaxed criteria based on profile
+    const isAggressive = profile === 'scalp';
+    const minBodyPercentage = isAggressive ? 0.4 : 0.5; // Reduced from 0.6
+    
     for (let i = startSearch; i < candles.length - 1; i++) {
       const candle = candles[i];
       const prevCandle = i > 0 ? candles[i - 1] : null;
       const nextCandle = i < candles.length - 1 ? candles[i + 1] : null;
       
-      // Enhanced zone detection with better criteria
+      // Relaxed zone detection - make strong rejection optional for aggressive profiles
       const hasStrongRejection = this._hasStrongReaction(candles, i);
       const bodyPercentage = Math.abs(candle.c - candle.o) / (candle.h - candle.l);
+      const meetsReactionCriteria = isAggressive || hasStrongRejection;
       
-      // Zonas de Demanda (Discount Area) - Enhanced criteria
-      if (candle.h < fib50 && candle.c < candle.o && bodyPercentage > 0.6 && hasStrongRejection) {
+      // Expanded Fibonacci criteria for demand zones
+      const inDemandArea = candle.h < fib618 || (candle.l < fib50 && candle.h < fib786);
+      
+      // Zonas de Demanda - Relaxed criteria
+      if (inDemandArea && candle.c < candle.o && bodyPercentage > minBodyPercentage && meetsReactionCriteria) {
         const zone: EnhancedZone = {
           low: candle.l,
           high: candle.h,
@@ -312,8 +321,11 @@ export class SMCAnalyzer {
         totalZonesFound++;
       }
       
-      // Zonas de Supply (Premium Area) - Enhanced criteria
-      if (candle.l > fib50 && candle.c > candle.o && bodyPercentage > 0.6 && hasStrongRejection) {
+      // Expanded Fibonacci criteria for supply zones
+      const inSupplyArea = candle.l > fib382 || (candle.h > fib50 && candle.l > fib236);
+      
+      // Zonas de Supply - Relaxed criteria
+      if (inSupplyArea && candle.c > candle.o && bodyPercentage > minBodyPercentage && meetsReactionCriteria) {
         const zone: EnhancedZone = {
           low: candle.l,
           high: candle.h,
@@ -457,20 +469,29 @@ export class SMCAnalyzer {
     const settings = getSettings();
     const profile = settings.tradingProfile;
     
-    // More strict testing criteria based on profile
-    let penetrationThreshold = 0.3; // 30% penetration required
-    let minReactionCandles = 1;
+    // Relaxed testing criteria - reduced penetration requirements
+    let penetrationThreshold = 0.15; // Reduced from 30%
+    let minReactionCandles = 0; // No reaction required for aggressive
     
     if (profile === 'swing') {
-      penetrationThreshold = 0.5; // 50% penetration for conservative
-      minReactionCandles = 2;
+      penetrationThreshold = 0.25; // Reduced from 50%
+      minReactionCandles = 1; // Reduced from 2
     } else if (profile === 'scalp') {
-      penetrationThreshold = 0.15; // 15% penetration for aggressive
-      minReactionCandles = 1;
+      penetrationThreshold = 0.1; // Very low for aggressive
+      minReactionCandles = 0; // No reaction required
+    } else {
+      penetrationThreshold = 0.2; // Balanced profile
+      minReactionCandles = 0;
     }
     
     const zoneHeight = zone.h - zone.l;
     let validTests = 0;
+    
+    // Add timeout logic - older zones less likely to be considered "tested"
+    const ageInCandles = candles.length - formationIndex;
+    if (ageInCandles > 50) {
+      penetrationThreshold *= 1.5; // Require more penetration for old zones
+    }
     
     for (let i = formationIndex + 1; i < candles.length - minReactionCandles; i++) {
       const candle = candles[i];
@@ -481,20 +502,26 @@ export class SMCAnalyzer {
         
         // Check if penetration is significant enough
         if (penetration >= penetrationThreshold) {
-          // Check for reaction in next candle(s)
-          let hasReaction = false;
-          for (let j = 1; j <= minReactionCandles && i + j < candles.length; j++) {
-            const nextCandle = candles[i + j];
-            // For demand zones, look for bullish reaction; for supply zones, bearish reaction
-            if ((zone.l < zone.h && nextCandle.c > nextCandle.o) || 
-                (zone.l > zone.h && nextCandle.c < nextCandle.o)) {
-              hasReaction = true;
-              break;
+          // For aggressive profiles, any penetration counts as "tested"
+          if (minReactionCandles === 0) {
+            validTests++;
+            if (validTests >= 1) return true;
+          } else {
+            // Check for reaction in next candle(s)
+            let hasReaction = false;
+            for (let j = 1; j <= minReactionCandles && i + j < candles.length; j++) {
+              const nextCandle = candles[i + j];
+              // For demand zones, look for bullish reaction; for supply zones, bearish reaction
+              if ((zone.l < zone.h && nextCandle.c > nextCandle.o) || 
+                  (zone.l > zone.h && nextCandle.c < nextCandle.o)) {
+                hasReaction = true;
+                break;
+              }
             }
+            
+            if (hasReaction) validTests++;
+            if (validTests >= 1) return true; // Reduced requirement
           }
-          
-          if (hasReaction) validTests++;
-          if (validTests >= (profile === 'scalp' ? 1 : 2)) return true;
         }
       }
     }
@@ -517,41 +544,49 @@ export class SMCAnalyzer {
     const { bias, demandZones, supplyZones, majorHigh, majorLow } = analysis;
     const plans: TradePlan[] = [];
     
-    // Profile-specific parameters
+    // Relaxed R/R criteria based on profile
     const profileConfig = {
       scalp: {
-        minRR: 0.3,
-        maxRR: 1.5,
+        minRR: 0.2,
+        maxRR: 2.0,
         maxPlans: 5,
         preferClose: true,
-        maxDistance: 3.0,
-        testedWeight: 0.7 // Less penalty for tested zones
+        maxDistance: 5.0,
+        testedWeight: 0.8 // Very lenient for tested zones
       },
       balanced: {
-        minRR: 1.0,
-        maxRR: 3.0,
+        minRR: 0.5,
+        maxRR: 4.0,
         maxPlans: 3,
         preferClose: false,
-        maxDistance: 7.0,
-        testedWeight: 0.5
+        maxDistance: 10.0,
+        testedWeight: 0.6
       },
       swing: {
-        minRR: 2.0,
-        maxRR: 10.0,
+        minRR: 1.0,
+        maxRR: 8.0,
         maxPlans: 2,
         preferClose: false,
-        maxDistance: 15.0,
-        testedWeight: 0.2 // Heavy penalty for tested zones
+        maxDistance: 20.0,
+        testedWeight: 0.3
       }
     };
     
     const config = profileConfig[profile];
     
-    if (type === 'buy' && bias === 'BULLISH' && majorHigh) {
+    // Buy plans for bullish bias or suitable zones in sideways market
+    if (type === 'buy' && (bias === 'BULLISH' || bias === 'SIDEWAYS') && majorHigh) {
       let validZones = demandZones.filter(zone => 
         zone.distance <= config.maxDistance &&
-        (!zone.tested || config.testedWeight > 0.3)
+        (!zone.tested || config.testedWeight > 0.4)
       );
+      
+      // If no zones found, relax criteria further
+      if (validZones.length === 0) {
+        validZones = demandZones.filter(zone => 
+          zone.distance <= config.maxDistance * 1.5 // Increase distance tolerance
+        );
+      }
       
       // Sort by profile preference
       if (config.preferClose) {
@@ -567,12 +602,21 @@ export class SMCAnalyzer {
       validZones.slice(0, config.maxPlans).forEach((zone, index) => {
         const entryPrice = zone.high;
         const stopPrice = zone.low;
-        const targetPrice = majorHigh.price;
+        
+        // For sideways market, use closer targets or resistance levels
+        let targetPrice = majorHigh.price;
+        if (bias === 'SIDEWAYS') {
+          // Use a more conservative target based on range
+          const range = majorHigh.price - majorLow.price;
+          targetPrice = entryPrice + (range * 0.6); // 60% of range as target
+        }
+        
         const riskReward = (targetPrice - entryPrice) / (entryPrice - stopPrice);
         
         if (riskReward >= config.minRR && riskReward <= config.maxRR) {
           const planStrength = this._calculatePlanStrength(zone, riskReward);
-          const explanation = `${index === 0 ? 'Primary' : 'Alternative'} buy setup in a ${bias.toLowerCase()} structure. Entry at demand zone (${zone.strength.toLowerCase()} strength, ${zone.age.toLowerCase()} formation) ${zone.distance.toFixed(1)}% from current price. ${zone.tested ? 'Zone previously tested.' : 'Fresh untested zone.'} R/R: ${riskReward.toFixed(2)}`;
+          const marketContext = bias === 'SIDEWAYS' ? 'range-bound' : bias.toLowerCase();
+          const explanation = `${index === 0 ? 'Primary' : 'Alternative'} buy setup in a ${marketContext} market. Entry at demand zone (${zone.strength.toLowerCase()} strength, ${zone.age.toLowerCase()} formation) ${zone.distance.toFixed(1)}% from current price. ${zone.tested ? 'Zone previously tested.' : 'Fresh untested zone.'} R/R: ${riskReward.toFixed(2)}`;
           
           plans.push({
             title: `Buy Plan ${index + 1} (${zone.strength})`,
@@ -588,11 +632,19 @@ export class SMCAnalyzer {
       });
     }
     
-    if (type === 'sell' && bias === 'BEARISH' && majorLow) {
+    // Sell plans for bearish bias or suitable zones in sideways market
+    if (type === 'sell' && (bias === 'BEARISH' || bias === 'SIDEWAYS') && majorLow) {
       let validZones = supplyZones.filter(zone => 
         zone.distance <= config.maxDistance &&
-        (!zone.tested || config.testedWeight > 0.3)
+        (!zone.tested || config.testedWeight > 0.4)
       );
+      
+      // If no zones found, relax criteria further
+      if (validZones.length === 0) {
+        validZones = supplyZones.filter(zone => 
+          zone.distance <= config.maxDistance * 1.5 // Increase distance tolerance
+        );
+      }
       
       // Sort by profile preference
       if (config.preferClose) {
@@ -608,12 +660,21 @@ export class SMCAnalyzer {
       validZones.slice(0, config.maxPlans).forEach((zone, index) => {
         const entryPrice = zone.low;
         const stopPrice = zone.high;
-        const targetPrice = majorLow.price;
+        
+        // For sideways market, use closer targets or support levels
+        let targetPrice = majorLow.price;
+        if (bias === 'SIDEWAYS') {
+          // Use a more conservative target based on range
+          const range = majorHigh.price - majorLow.price;
+          targetPrice = entryPrice - (range * 0.6); // 60% of range as target
+        }
+        
         const riskReward = (entryPrice - targetPrice) / (stopPrice - entryPrice);
         
         if (riskReward >= config.minRR && riskReward <= config.maxRR) {
           const planStrength = this._calculatePlanStrength(zone, riskReward);
-          const explanation = `${index === 0 ? 'Primary' : 'Alternative'} sell setup in a ${bias.toLowerCase()} structure. Entry at supply zone (${zone.strength.toLowerCase()} strength, ${zone.age.toLowerCase()} formation) ${zone.distance.toFixed(1)}% from current price. ${zone.tested ? 'Zone previously tested.' : 'Fresh untested zone.'} R/R: ${riskReward.toFixed(2)}`;
+          const marketContext = bias === 'SIDEWAYS' ? 'range-bound' : bias.toLowerCase();
+          const explanation = `${index === 0 ? 'Primary' : 'Alternative'} sell setup in a ${marketContext} market. Entry at supply zone (${zone.strength.toLowerCase()} strength, ${zone.age.toLowerCase()} formation) ${zone.distance.toFixed(1)}% from current price. ${zone.tested ? 'Zone previously tested.' : 'Fresh untested zone.'} R/R: ${riskReward.toFixed(2)}`;
           
           plans.push({
             title: `Sell Plan ${index + 1} (${zone.strength})`,

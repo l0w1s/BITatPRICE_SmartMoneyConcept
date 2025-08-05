@@ -1,7 +1,7 @@
 import React from 'react';
 import { Card } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { TrendingUp, TrendingDown, Target, Shield } from 'lucide-react';
+import { TrendingUp, TrendingDown, Target, Shield, Activity } from 'lucide-react';
 
 interface TradePlan {
   title: string;
@@ -25,6 +25,7 @@ export const TradePlans: React.FC<TradePlansProps> = ({ analysis }) => {
 
   const PlanCard = ({ plan, type }: { plan: TradePlan; type: 'buy' | 'sell' }) => {
     const isBuy = type === 'buy';
+    const isWyckoff = plan.title.includes('Wyckoff');
     const colorClass = isBuy ? 'bullish' : 'bearish';
     const Icon = isBuy ? TrendingUp : TrendingDown;
 
@@ -47,9 +48,10 @@ export const TradePlans: React.FC<TradePlansProps> = ({ analysis }) => {
     };
 
     return (
-      <Card className={`p-4 border-2 border-${colorClass}/30 bg-gradient-to-br from-${colorClass}/10 to-${colorClass}/5`}>
+      <Card className={`p-4 border-2 border-${colorClass}/30 bg-gradient-to-br from-${colorClass}/10 to-${colorClass}/5 ${isWyckoff ? 'border-primary/40 bg-gradient-to-br from-primary/15 to-primary/5' : ''}`}>
         <div className="space-y-4">
           <div className="flex items-center gap-2 flex-wrap">
+            {isWyckoff && <Activity className="w-4 h-4 text-primary" />}
             <Icon className={`w-5 h-5 text-${colorClass}`} />
             <h3 className={`font-semibold text-${colorClass}`}>{plan.title}</h3>
             <div className="flex gap-1 ml-auto">
@@ -62,6 +64,11 @@ export const TradePlans: React.FC<TradePlansProps> = ({ analysis }) => {
               <Badge variant="secondary" className="text-xs" title="Risk/Reward Ratio">
                 R/R: {plan.riskReward.toFixed(1)}
               </Badge>
+              {isWyckoff && (
+                <Badge variant="outline" className="text-xs bg-primary/20 text-primary border-primary/30" title="Wyckoff Method">
+                  📈 Wyckoff
+                </Badge>
+              )}
             </div>
           </div>
           

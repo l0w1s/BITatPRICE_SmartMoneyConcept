@@ -53,6 +53,7 @@ export interface SMCAnalysis extends MarketStructure {
   bearishFVGs: EnhancedZone[];
   confluences?: ConfluenceZone[];
   debugInfo?: DebugInfo;
+  wyckoffAnalysis?: WyckoffAnalysis;
 }
 
 export interface ConfluenceZone {
@@ -70,6 +71,37 @@ export interface DebugInfo {
   testedZones: number;
   untestedZones: number;
   averageZoneDistance: number;
+}
+
+export interface WyckoffEvent {
+  type: 'PS' | 'SC' | 'ST' | 'BC' | 'Spring' | 'UpThrust' | 'LPS' | 'LPSY' | 'PSY';
+  price: number;
+  index: number;
+  volume?: number;
+  confidence: number;
+}
+
+export interface WyckoffPhase {
+  type: 'accumulation' | 'distribution';
+  phase: 'A' | 'B' | 'C' | 'D' | 'E';
+  events: WyckoffEvent[];
+  confidence: number;
+  tradingOpportunity: boolean;
+  rangeHigh: number;
+  rangeLow: number;
+  currentPhaseDescription: string;
+}
+
+export interface WyckoffAnalysis {
+  isWyckoffPattern: boolean;
+  currentPhase?: WyckoffPhase;
+  tradePlans: TradePlan[];
+  rangeAnalysis: {
+    rangeHigh: number;
+    rangeLow: number;
+    duration: number;
+    strength: 'STRONG' | 'MODERATE' | 'WEAK';
+  };
 }
 
 export class SMCAnalyzer {
@@ -121,8 +153,24 @@ export class SMCAnalyzer {
       analysis.debugInfo = pois.debugInfo;
     }
     
-    analysis.buyPlans = this._createMultipleTradePlans(analysis, 'buy');
-    analysis.sellPlans = this._createMultipleTradePlans(analysis, 'sell');
+    // Add Wyckoff analysis for sideways markets
+    if (analysis.bias === 'SIDEWAYS') {
+      analysis.wyckoffAnalysis = this._analyzeWyckoff(candles, analysis);
+      
+      // If Wyckoff patterns are detected, prioritize Wyckoff trade plans
+      if (analysis.wyckoffAnalysis.isWyckoffPattern && analysis.wyckoffAnalysis.tradePlans.length > 0) {
+        analysis.buyPlans = analysis.wyckoffAnalysis.tradePlans.filter(plan => plan.title.includes('Buy'));
+        analysis.sellPlans = analysis.wyckoffAnalysis.tradePlans.filter(plan => plan.title.includes('Sell'));
+      } else {
+        // Fall back to standard SMC plans
+        analysis.buyPlans = this._createMultipleTradePlans(analysis, 'buy');
+        analysis.sellPlans = this._createMultipleTradePlans(analysis, 'sell');
+      }
+    } else {
+      // Standard SMC analysis for trending markets
+      analysis.buyPlans = this._createMultipleTradePlans(analysis, 'buy');
+      analysis.sellPlans = this._createMultipleTradePlans(analysis, 'sell');
+    }
     
     return analysis;
   }
@@ -907,5 +955,430 @@ export class SMCAnalyzer {
       const strengthOrder = { STRONG: 3, MODERATE: 2, WEAK: 1 };
       return strengthOrder[b.strength] - strengthOrder[a.strength];
     }).slice(0, 10);
+  }
+
+  private static _analyzeWyckoff(candles: Candle[], analysis: SMCAnalysis): WyckoffAnalysis {
+    const { majorHigh, majorLow, currentPrice } = analysis;
+    
+    if (!majorHigh || !majorLow) {
+      return {
+        isWyckoffPattern: false,
+        tradePlans: [],
+        rangeAnalysis: {
+          rangeHigh: 0,
+          rangeLow: 0,
+          duration: 0,
+          strength: 'WEAK'
+        }
+      };
+    }
+
+    const rangeHigh = majorHigh.price;
+    const rangeLow = majorLow.price;
+    const rangeDuration = Math.abs(majorHigh.index - majorLow.index);
+    
+    // Determine if this is a valid Wyckoff range (minimum duration and range size)
+    const rangeSize = (rangeHigh - rangeLow) / currentPrice * 100;
+    const isValidRange = rangeDuration >= 20 && rangeSize >= 2; // At least 20 candles and 2% range
+    
+    if (!isValidRange) {
+      return {
+        isWyckoffPattern: false,
+        tradePlans: [],
+        rangeAnalysis: {
+          rangeHigh,
+          rangeLow,
+          duration: rangeDuration,
+          strength: 'WEAK'
+        }
+      };
+    }
+
+    // Detect Wyckoff events and phases
+    const wyckoffEvents = this._detectWyckoffEvents(candles, rangeHigh, rangeLow);
+    const currentPhase = this._determineWyckoffPhase(wyckoffEvents, candles, rangeHigh, rangeLow, currentPrice);
+    
+    // Generate Wyckoff trade plans if we're in a tradeable phase
+    const tradePlans = this._generateWyckoffTradePlans(currentPhase, currentPrice, rangeHigh, rangeLow);
+    
+    const rangeStrength = this._calculateRangeStrength(rangeDuration, rangeSize, wyckoffEvents.length);
+
+    return {
+      isWyckoffPattern: currentPhase !== null,
+      currentPhase: currentPhase || undefined,
+      tradePlans,
+      rangeAnalysis: {
+        rangeHigh,
+        rangeLow,
+        duration: rangeDuration,
+        strength: rangeStrength
+      }
+    };
+  }
+
+  private static _detectWyckoffEvents(candles: Candle[], rangeHigh: number, rangeLow: number): WyckoffEvent[] {
+    const events: WyckoffEvent[] = [];
+    const rangeSize = rangeHigh - rangeLow;
+    const rangeMid = rangeLow + (rangeSize * 0.5);
+    
+    for (let i = 10; i < candles.length - 10; i++) {
+      const candle = candles[i];
+      const prevCandle = candles[i - 1];
+      const nextCandle = candles[i + 1];
+      
+      // Calculate volume (simplified - using high-low range as proxy for volume)
+      const volumeProxy = candle.h - candle.l;
+      const avgVolume = candles.slice(Math.max(0, i - 20), i).reduce((sum, c) => sum + (c.h - c.l), 0) / 20;
+      const isHighVolume = volumeProxy > avgVolume * 1.5;
+      
+      // Detect potential Selling Climax (SC) - high volume selling near range low
+      if (candle.l <= rangeLow * 1.02 && candle.c < candle.o && isHighVolume) {
+        events.push({
+          type: 'SC',
+          price: candle.l,
+          index: i,
+          volume: volumeProxy,
+          confidence: this._calculateEventConfidence('SC', candle, candles, i, rangeHigh, rangeLow)
+        });
+      }
+      
+      // Detect potential Buying Climax (BC) - high volume buying near range high
+      if (candle.h >= rangeHigh * 0.98 && candle.c > candle.o && isHighVolume) {
+        events.push({
+          type: 'BC',
+          price: candle.h,
+          index: i,
+          volume: volumeProxy,
+          confidence: this._calculateEventConfidence('BC', candle, candles, i, rangeHigh, rangeLow)
+        });
+      }
+      
+      // Detect Spring - false breakout below range low
+      if (candle.l < rangeLow && candle.c > rangeLow && nextCandle && nextCandle.c > candle.c) {
+        events.push({
+          type: 'Spring',
+          price: candle.l,
+          index: i,
+          volume: volumeProxy,
+          confidence: this._calculateEventConfidence('Spring', candle, candles, i, rangeHigh, rangeLow)
+        });
+      }
+      
+      // Detect UpThrust - false breakout above range high
+      if (candle.h > rangeHigh && candle.c < rangeHigh && nextCandle && nextCandle.c < candle.c) {
+        events.push({
+          type: 'UpThrust',
+          price: candle.h,
+          index: i,
+          volume: volumeProxy,
+          confidence: this._calculateEventConfidence('UpThrust', candle, candles, i, rangeHigh, rangeLow)
+        });
+      }
+      
+      // Detect Last Point of Support (LPS) - higher low after spring
+      if (i > 0 && candle.l > rangeLow && candle.l < rangeMid) {
+        const hasSpringBefore = events.some(e => e.type === 'Spring' && e.index < i);
+        if (hasSpringBefore && candle.c > candle.o) {
+          events.push({
+            type: 'LPS',
+            price: candle.l,
+            index: i,
+            volume: volumeProxy,
+            confidence: this._calculateEventConfidence('LPS', candle, candles, i, rangeHigh, rangeLow)
+          });
+        }
+      }
+      
+      // Detect Last Point of Supply (LPSY) - lower high after upthrust
+      if (i > 0 && candle.h < rangeHigh && candle.h > rangeMid) {
+        const hasUpThrustBefore = events.some(e => e.type === 'UpThrust' && e.index < i);
+        if (hasUpThrustBefore && candle.c < candle.o) {
+          events.push({
+            type: 'LPSY',
+            price: candle.h,
+            index: i,
+            volume: volumeProxy,
+            confidence: this._calculateEventConfidence('LPSY', candle, candles, i, rangeHigh, rangeLow)
+          });
+        }
+      }
+    }
+    
+    // Filter events by confidence and remove duplicates
+    return events
+      .filter(event => event.confidence >= 0.6)
+      .sort((a, b) => a.index - b.index)
+      .filter((event, index, arr) => {
+        // Remove duplicate events of same type within 5 candles
+        return !arr.slice(0, index).some(prev => 
+          prev.type === event.type && Math.abs(prev.index - event.index) <= 5
+        );
+      });
+  }
+
+  private static _calculateEventConfidence(
+    eventType: string, 
+    candle: Candle, 
+    candles: Candle[], 
+    index: number, 
+    rangeHigh: number, 
+    rangeLow: number
+  ): number {
+    let confidence = 0.5; // Base confidence
+    
+    const rangeSize = rangeHigh - rangeLow;
+    const volumeProxy = candle.h - candle.l;
+    const avgVolume = candles.slice(Math.max(0, index - 20), index).reduce((sum, c) => sum + (c.h - c.l), 0) / 20;
+    
+    // Volume confirmation
+    if (volumeProxy > avgVolume * 1.5) confidence += 0.2;
+    if (volumeProxy > avgVolume * 2) confidence += 0.1;
+    
+    // Price action confirmation
+    const bodySize = Math.abs(candle.c - candle.o);
+    const candleSize = candle.h - candle.l;
+    const bodyRatio = bodySize / candleSize;
+    
+    if (bodyRatio > 0.6) confidence += 0.15; // Strong directional move
+    
+    // Context-specific confirmations
+    switch (eventType) {
+      case 'Spring':
+        if (candle.c > candle.o) confidence += 0.15; // Bullish close after false break
+        break;
+      case 'UpThrust':
+        if (candle.c < candle.o) confidence += 0.15; // Bearish close after false break
+        break;
+      case 'LPS':
+        if (candle.l > rangeLow + rangeSize * 0.1) confidence += 0.1; // Higher low
+        break;
+      case 'LPSY':
+        if (candle.h < rangeHigh - rangeSize * 0.1) confidence += 0.1; // Lower high
+        break;
+    }
+    
+    return Math.min(confidence, 1.0);
+  }
+
+  private static _determineWyckoffPhase(
+    events: WyckoffEvent[], 
+    candles: Candle[], 
+    rangeHigh: number, 
+    rangeLow: number, 
+    currentPrice: number
+  ): WyckoffPhase | null {
+    if (events.length === 0) return null;
+    
+    const latestEvents = events.slice(-3); // Look at most recent events
+    const hasSpring = events.some(e => e.type === 'Spring');
+    const hasUpThrust = events.some(e => e.type === 'UpThrust');
+    const hasLPS = events.some(e => e.type === 'LPS');
+    const hasLPSY = events.some(e => e.type === 'LPSY');
+    const hasSC = events.some(e => e.type === 'SC');
+    const hasBC = events.some(e => e.type === 'BC');
+    
+    // Determine if we're in accumulation or distribution
+    if (hasSpring || (hasSC && hasLPS)) {
+      // Accumulation pattern
+      let phase: 'A' | 'B' | 'C' | 'D' | 'E' = 'B';
+      let description = '';
+      let tradingOpportunity = false;
+      
+      if (hasSpring && hasLPS) {
+        phase = 'D';
+        description = 'Phase D: Evidence of readiness to move higher. Last Point of Support identified.';
+        tradingOpportunity = true;
+      } else if (hasSpring) {
+        phase = 'C';
+        description = 'Phase C: Spring detected. Testing for remaining supply.';
+        tradingOpportunity = true;
+      } else if (hasSC) {
+        phase = 'A';
+        description = 'Phase A: Selling climax detected. Stopping action in progress.';
+      } else {
+        description = 'Phase B: Building of cause. Range development.';
+      }
+      
+      return {
+        type: 'accumulation',
+        phase,
+        events,
+        confidence: this._calculatePhaseConfidence(events, 'accumulation'),
+        tradingOpportunity,
+        rangeHigh,
+        rangeLow,
+        currentPhaseDescription: description
+      };
+    } else if (hasUpThrust || (hasBC && hasLPSY)) {
+      // Distribution pattern
+      let phase: 'A' | 'B' | 'C' | 'D' | 'E' = 'B';
+      let description = '';
+      let tradingOpportunity = false;
+      
+      if (hasUpThrust && hasLPSY) {
+        phase = 'D';
+        description = 'Phase D: Evidence of readiness to move lower. Last Point of Supply identified.';
+        tradingOpportunity = true;
+      } else if (hasUpThrust) {
+        phase = 'C';
+        description = 'Phase C: UpThrust detected. Testing for remaining demand.';
+        tradingOpportunity = true;
+      } else if (hasBC) {
+        phase = 'A';
+        description = 'Phase A: Buying climax detected. Stopping action in progress.';
+      } else {
+        description = 'Phase B: Building of cause. Range development.';
+      }
+      
+      return {
+        type: 'distribution',
+        phase,
+        events,
+        confidence: this._calculatePhaseConfidence(events, 'distribution'),
+        tradingOpportunity,
+        rangeHigh,
+        rangeLow,
+        currentPhaseDescription: description
+      };
+    }
+    
+    return null;
+  }
+
+  private static _calculatePhaseConfidence(events: WyckoffEvent[], type: 'accumulation' | 'distribution'): number {
+    if (events.length === 0) return 0;
+    
+    let confidence = 0.4; // Base confidence
+    
+    // Add confidence based on number of confirming events
+    confidence += Math.min(events.length * 0.1, 0.3);
+    
+    // Add confidence based on event quality
+    const avgEventConfidence = events.reduce((sum, e) => sum + e.confidence, 0) / events.length;
+    confidence += avgEventConfidence * 0.3;
+    
+    // Type-specific bonuses
+    if (type === 'accumulation') {
+      if (events.some(e => e.type === 'Spring')) confidence += 0.15;
+      if (events.some(e => e.type === 'LPS')) confidence += 0.1;
+    } else {
+      if (events.some(e => e.type === 'UpThrust')) confidence += 0.15;
+      if (events.some(e => e.type === 'LPSY')) confidence += 0.1;
+    }
+    
+    return Math.min(confidence, 1.0);
+  }
+
+  private static _generateWyckoffTradePlans(
+    phase: WyckoffPhase | null, 
+    currentPrice: number, 
+    rangeHigh: number, 
+    rangeLow: number
+  ): TradePlan[] {
+    if (!phase || !phase.tradingOpportunity) return [];
+    
+    const plans: TradePlan[] = [];
+    const rangeSize = rangeHigh - rangeLow;
+    const settings = getSettings();
+    
+    if (phase.type === 'accumulation' && (phase.phase === 'C' || phase.phase === 'D')) {
+      // Accumulation buy plans
+      let entryPrice: number;
+      let stopPrice: number;
+      let targetPrice: number;
+      let explanation: string;
+      
+      if (phase.phase === 'C') {
+        // Entry after Spring
+        const springEvent = phase.events.find(e => e.type === 'Spring');
+        entryPrice = springEvent ? springEvent.price * 1.005 : rangeLow * 1.01; // Slightly above spring low
+        stopPrice = rangeLow * 0.995; // Below range low
+        targetPrice = rangeHigh; // Top of range
+        explanation = `Wyckoff Accumulation Phase C: Entry after Spring. Market has tested and found support below the range, indicating absorption of supply. Target: range high.`;
+      } else {
+        // Entry at LPS (Phase D)
+        const lpsEvent = phase.events.find(e => e.type === 'LPS');
+        entryPrice = lpsEvent ? lpsEvent.price * 1.002 : rangeLow + rangeSize * 0.2;
+        stopPrice = rangeLow * 0.99;
+        targetPrice = rangeHigh + rangeSize * 0.5; // Above range - markup target
+        explanation = `Wyckoff Accumulation Phase D: Entry at Last Point of Support. Strong hands are ready to markup. Target extends beyond range for markup phase.`;
+      }
+      
+      const riskReward = (targetPrice - entryPrice) / (entryPrice - stopPrice);
+      
+      if (riskReward >= 1.0) {
+        plans.push({
+          title: `Wyckoff Buy (Phase ${phase.phase})`,
+          entry: entryPrice,
+          stop: stopPrice,
+          target: targetPrice,
+          riskReward,
+          strength: phase.confidence >= 0.8 ? 'STRONG' : phase.confidence >= 0.6 ? 'MODERATE' : 'WEAK',
+          age: 'FRESH',
+          explanation
+        });
+      }
+    } else if (phase.type === 'distribution' && (phase.phase === 'C' || phase.phase === 'D')) {
+      // Distribution sell plans
+      let entryPrice: number;
+      let stopPrice: number;
+      let targetPrice: number;
+      let explanation: string;
+      
+      if (phase.phase === 'C') {
+        // Entry after UpThrust
+        const upThrustEvent = phase.events.find(e => e.type === 'UpThrust');
+        entryPrice = upThrustEvent ? upThrustEvent.price * 0.995 : rangeHigh * 0.99; // Slightly below upthrust high
+        stopPrice = rangeHigh * 1.005; // Above range high
+        targetPrice = rangeLow; // Bottom of range
+        explanation = `Wyckoff Distribution Phase C: Entry after UpThrust. Market has tested and found resistance above the range, indicating lack of demand. Target: range low.`;
+      } else {
+        // Entry at LPSY (Phase D)
+        const lpsyEvent = phase.events.find(e => e.type === 'LPSY');
+        entryPrice = lpsyEvent ? lpsyEvent.price * 0.998 : rangeHigh - rangeSize * 0.2;
+        stopPrice = rangeHigh * 1.01;
+        targetPrice = rangeLow - rangeSize * 0.5; // Below range - markdown target
+        explanation = `Wyckoff Distribution Phase D: Entry at Last Point of Supply. Weak hands are ready for markdown. Target extends beyond range for markdown phase.`;
+      }
+      
+      const riskReward = (entryPrice - targetPrice) / (stopPrice - entryPrice);
+      
+      if (riskReward >= 1.0) {
+        plans.push({
+          title: `Wyckoff Sell (Phase ${phase.phase})`,
+          entry: entryPrice,
+          stop: stopPrice,
+          target: targetPrice,
+          riskReward,
+          strength: phase.confidence >= 0.8 ? 'STRONG' : phase.confidence >= 0.6 ? 'MODERATE' : 'WEAK',
+          age: 'FRESH',
+          explanation
+        });
+      }
+    }
+    
+    return plans;
+  }
+
+  private static _calculateRangeStrength(duration: number, rangeSize: number, eventCount: number): 'STRONG' | 'MODERATE' | 'WEAK' {
+    let score = 0;
+    
+    // Duration scoring
+    if (duration >= 50) score += 3;
+    else if (duration >= 30) score += 2;
+    else score += 1;
+    
+    // Range size scoring
+    if (rangeSize >= 5) score += 3;
+    else if (rangeSize >= 3) score += 2;
+    else score += 1;
+    
+    // Event count scoring
+    if (eventCount >= 4) score += 2;
+    else if (eventCount >= 2) score += 1;
+    
+    if (score >= 6) return 'STRONG';
+    if (score >= 4) return 'MODERATE';
+    return 'WEAK';
   }
 }

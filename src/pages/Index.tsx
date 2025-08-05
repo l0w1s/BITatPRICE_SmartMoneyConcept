@@ -10,6 +10,7 @@ import { BiasCard } from '@/components/BiasCard';
 import { TradePlans } from '@/components/TradePlans';
 import { ZonesCard } from '@/components/ZonesCard';
 import { DebugCard } from '@/components/DebugCard';
+import { WyckoffAnalysis } from '@/components/WyckoffAnalysis';
 import { AboutModal } from '@/components/AboutModal';
 import { DonateModal } from '@/components/DonateModal';
 import { AlertsCard } from '@/components/AlertsCard';
@@ -227,6 +228,14 @@ const Index = () => {
                 {/* FVGs can be added here when implemented */}
               </div>
             </div>
+
+            {/* Wyckoff Analysis for Sideways Markets */}
+            {analysis.wyckoffAnalysis && (
+              <WyckoffAnalysis 
+                analysis={analysis.wyckoffAnalysis} 
+                currentPrice={currentPrice} 
+              />
+            )}
 
             <TradePlans analysis={analysis} />
 

@@ -54,23 +54,29 @@ export const useAlerts = (analysis: SMCAnalysis | null, currentPrice: number) =>
   useEffect(() => {
     if (!currentPrice) return;
 
+    const triggeredAlerts: Alert[] = [];
+    
     setAlerts(prevAlerts => 
       prevAlerts.map(alert => {
         if (alert.isActive && !alert.triggered) {
           const distance = Math.abs(currentPrice - alert.zonePrice) / alert.zonePrice * 100;
           
           if (distance <= 0.5) { // 0.5% threshold
-            toast({
-              title: "🚨 Critical Zone Reached!",
-              description: `Price approached ${alert.zoneName} (${alert.zonePrice.toFixed(0)})`,
-            });
-            
+            triggeredAlerts.push(alert);
             return { ...alert, triggered: true };
           }
         }
         return alert;
       })
     );
+
+    // Show toast notifications after state update
+    triggeredAlerts.forEach(alert => {
+      toast({
+        title: "🚨 Critical Zone Reached!",
+        description: `Price approached ${alert.zoneName} (${alert.zonePrice.toFixed(0)})`,
+      });
+    });
   }, [currentPrice, toast]);
 
   const toggleAlert = (alertId: string) => {

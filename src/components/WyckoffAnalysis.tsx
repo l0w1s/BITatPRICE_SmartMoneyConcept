@@ -44,20 +44,71 @@ export const WyckoffAnalysis: React.FC<WyckoffAnalysisProps> = ({ analysis, curr
       case 'STRONG': return 'text-primary border-primary/30 bg-primary/10';
       case 'MODERATE': return 'text-yellow-400 border-yellow-400/30 bg-yellow-400/10';
       case 'WEAK': return 'text-muted-foreground border-muted/30 bg-muted/10';
+      case 'DEVELOPING': return 'text-blue-400 border-blue-400/30 bg-blue-400/10';
       default: return 'text-muted-foreground';
     }
   };
 
   if (!analysis.isWyckoffPattern) {
+    const { rangeAnalysis } = analysis;
+    const isDeveloping = rangeAnalysis.strength === 'DEVELOPING';
+    
     return (
       <Card className="p-6 text-center border-dashed">
         <div className="flex items-center justify-center gap-2 mb-2">
           <BarChart3 className="w-5 h-5 text-muted-foreground" />
-          <span className="text-muted-foreground">No Wyckoff Pattern Detected</span>
+          <span className="text-muted-foreground">
+            {isDeveloping ? 'Wyckoff Range Developing' : 'No Wyckoff Pattern Detected'}
+          </span>
         </div>
-        <p className="text-sm text-muted-foreground">
-          Market range too small or insufficient duration for Wyckoff analysis
-        </p>
+        
+        {isDeveloping && rangeAnalysis.debugInfo ? (
+          <div className="space-y-3 mt-4">
+            <Badge variant="outline" className={getStrengthColor('DEVELOPING')}>
+              Range in Formation
+            </Badge>
+            
+            <div className="text-left p-3 bg-muted/30 rounded-md border">
+              <h4 className="text-sm font-semibold mb-2">Progress Status:</h4>
+              <p className="text-xs text-muted-foreground mb-2">
+                {rangeAnalysis.debugInfo.status}
+              </p>
+              
+              <div className="grid grid-cols-2 gap-2 text-xs">
+                <div>
+                  <span className="text-muted-foreground">Duration: </span>
+                  <span className="font-mono">
+                    {rangeAnalysis.debugInfo.currentDuration}/{rangeAnalysis.debugInfo.requiredDuration}
+                  </span>
+                </div>
+                <div>
+                  <span className="text-muted-foreground">Range Size: </span>
+                  <span className="font-mono">
+                    {rangeAnalysis.debugInfo.currentRangeSize}%/{rangeAnalysis.debugInfo.requiredRangeSize}%
+                  </span>
+                </div>
+                <div>
+                  <span className="text-muted-foreground">S/R Touches: </span>
+                  <span className="font-mono">{rangeAnalysis.debugInfo.touchCount}</span>
+                </div>
+                <div>
+                  <span className="text-muted-foreground">Range: </span>
+                  <span className="font-mono">
+                    {formatPrice(rangeAnalysis.rangeLow)} - {formatPrice(rangeAnalysis.rangeHigh)}
+                  </span>
+                </div>
+              </div>
+            </div>
+            
+            <p className="text-xs text-muted-foreground">
+              💡 The range is forming but needs more time or volatility for full Wyckoff analysis
+            </p>
+          </div>
+        ) : (
+          <p className="text-sm text-muted-foreground">
+            Market range too small or insufficient duration for Wyckoff analysis
+          </p>
+        )}
       </Card>
     );
   }

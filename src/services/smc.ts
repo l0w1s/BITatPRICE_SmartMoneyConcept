@@ -100,7 +100,15 @@ export interface WyckoffAnalysis {
     rangeHigh: number;
     rangeLow: number;
     duration: number;
-    strength: 'STRONG' | 'MODERATE' | 'WEAK';
+    strength: 'STRONG' | 'MODERATE' | 'WEAK' | 'DEVELOPING';
+    debugInfo?: {
+      currentDuration: number;
+      requiredDuration: number;
+      currentRangeSize: number;
+      requiredRangeSize: number;
+      touchCount: number;
+      status: string;
+    };
   };
 }
 
@@ -155,7 +163,7 @@ export class SMCAnalyzer {
     
     // Add Wyckoff analysis for sideways markets
     if (analysis.bias === 'SIDEWAYS') {
-      analysis.wyckoffAnalysis = this._analyzeWyckoff(candles, analysis);
+      analysis.wyckoffAnalysis = this._analyzeWyckoff(candles, analysis, timeframe);
       
       // If Wyckoff patterns are detected, prioritize Wyckoff trade plans
       if (analysis.wyckoffAnalysis.isWyckoffPattern && analysis.wyckoffAnalysis.tradePlans.length > 0) {
@@ -957,7 +965,7 @@ export class SMCAnalyzer {
     }).slice(0, 10);
   }
 
-  private static _analyzeWyckoff(candles: Candle[], analysis: SMCAnalysis): WyckoffAnalysis {
+  private static _analyzeWyckoff(candles: Candle[], analysis: SMCAnalysis, timeframe?: string): WyckoffAnalysis {
     const { majorHigh, majorLow, currentPrice } = analysis;
     
     if (!majorHigh || !majorLow) {
@@ -976,12 +984,29 @@ export class SMCAnalyzer {
     const rangeHigh = majorHigh.price;
     const rangeLow = majorLow.price;
     const rangeDuration = Math.abs(majorHigh.index - majorLow.index);
-    
-    // Determine if this is a valid Wyckoff range (minimum duration and range size)
     const rangeSize = (rangeHigh - rangeLow) / currentPrice * 100;
-    const isValidRange = rangeDuration >= 20 && rangeSize >= 2; // At least 20 candles and 2% range
     
-    if (!isValidRange) {
+    // Calculate adaptive criteria based on timeframe and volatility
+    const adaptiveCriteria = this._getAdaptiveWyckoffCriteria(candles, timeframe);
+    const requiredDuration = adaptiveCriteria.minDuration;
+    const requiredRangeSize = adaptiveCriteria.minRangeSize;
+    
+    // Calculate number of touches at support/resistance
+    const touchCount = this._countRangeTouches(candles, rangeHigh, rangeLow);
+    
+    // Enhanced validation with fallback logic
+    const isValidRange = rangeDuration >= requiredDuration && 
+                        rangeSize >= requiredRangeSize;
+    
+    // Fallback: Allow smaller ranges with high quality (more touches)
+    const isFallbackRange = (rangeDuration >= Math.floor(requiredDuration * 0.7) && 
+                            rangeSize >= requiredRangeSize * 0.6 && 
+                            touchCount >= 4) || 
+                           (rangeDuration >= requiredDuration && 
+                            rangeSize >= requiredRangeSize * 0.5 && 
+                            touchCount >= 6);
+    
+    if (!isValidRange && !isFallbackRange) {
       return {
         isWyckoffPattern: false,
         tradePlans: [],
@@ -989,7 +1014,15 @@ export class SMCAnalyzer {
           rangeHigh,
           rangeLow,
           duration: rangeDuration,
-          strength: 'WEAK'
+          strength: 'DEVELOPING',
+          debugInfo: {
+            currentDuration: rangeDuration,
+            requiredDuration,
+            currentRangeSize: parseFloat(rangeSize.toFixed(2)),
+            requiredRangeSize,
+            touchCount,
+            status: `Range developing (${rangeDuration}/${requiredDuration} candles, ${rangeSize.toFixed(1)}%/${requiredRangeSize}% size, ${touchCount} touches)`
+          }
         }
       };
     }
@@ -1380,5 +1413,73 @@ export class SMCAnalyzer {
     if (score >= 6) return 'STRONG';
     if (score >= 4) return 'MODERATE';
     return 'WEAK';
+  }
+
+  private static _getAdaptiveWyckoffCriteria(candles: Candle[], timeframe?: string): { minDuration: number; minRangeSize: number } {
+    // Base criteria by timeframe
+    const timeframeConfig: Record<string, { minDuration: number; minRangeSize: number }> = {
+      '1m': { minDuration: 15, minRangeSize: 1.0 },
+      '5m': { minDuration: 15, minRangeSize: 1.0 },
+      '15m': { minDuration: 12, minRangeSize: 1.5 },
+      '30m': { minDuration: 12, minRangeSize: 1.5 },
+      '1h': { minDuration: 10, minRangeSize: 2.0 },
+      '4h': { minDuration: 10, minRangeSize: 2.0 },
+      '1d': { minDuration: 7, minRangeSize: 2.5 }
+    };
+    
+    // Default values if timeframe not recognized
+    const defaultCriteria = { minDuration: 10, minRangeSize: 1.5 };
+    const baseCriteria = timeframeConfig[timeframe || ''] || defaultCriteria;
+    
+    // Calculate average volatility (ATR-like measure)
+    if (candles.length >= 20) {
+      const recentCandles = candles.slice(-50);
+      const avgRange = recentCandles.reduce((sum, candle) => 
+        sum + ((candle.h - candle.l) / candle.c * 100), 0) / recentCandles.length;
+      
+      // Adjust range size based on current volatility
+      // Lower volatility = lower requirements, higher volatility = higher requirements
+      let volatilityMultiplier = 1.0;
+      if (avgRange < 0.5) volatilityMultiplier = 0.6; // Very low volatility
+      else if (avgRange < 1.0) volatilityMultiplier = 0.8; // Low volatility
+      else if (avgRange > 3.0) volatilityMultiplier = 1.4; // High volatility
+      else if (avgRange > 2.0) volatilityMultiplier = 1.2; // Moderate-high volatility
+      
+      baseCriteria.minRangeSize *= volatilityMultiplier;
+      
+      // Ensure minimum absolute threshold
+      baseCriteria.minRangeSize = Math.max(baseCriteria.minRangeSize, 0.5);
+    }
+    
+    return baseCriteria;
+  }
+
+  private static _countRangeTouches(candles: Candle[], rangeHigh: number, rangeLow: number): number {
+    let touchCount = 0;
+    const tolerance = (rangeHigh - rangeLow) * 0.02; // 2% tolerance
+    
+    for (let i = 0; i < candles.length; i++) {
+      const candle = candles[i];
+      
+      // Count touches at range high
+      if (Math.abs(candle.h - rangeHigh) <= tolerance || 
+          Math.abs(candle.c - rangeHigh) <= tolerance) {
+        touchCount++;
+      }
+      
+      // Count touches at range low
+      if (Math.abs(candle.l - rangeLow) <= tolerance || 
+          Math.abs(candle.c - rangeLow) <= tolerance) {
+        touchCount++;
+      }
+      
+      // Count wicks testing the levels
+      if ((candle.h >= rangeHigh - tolerance && candle.c < rangeHigh - tolerance) ||
+          (candle.l <= rangeLow + tolerance && candle.c > rangeLow + tolerance)) {
+        touchCount++;
+      }
+    }
+    
+    return touchCount;
   }
 }

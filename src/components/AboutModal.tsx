@@ -383,15 +383,25 @@ export const AboutModal: React.FC<AboutModalProps> = ({ isOpen, onClose }) => {
                   </div>
                 </div>
                 
-                <div className="flex items-start gap-3 p-3 rounded-lg bg-purple-500/10 border border-purple-500/30">
-                  <Clock className="w-5 h-5 text-purple-500 mt-0.5" />
-                  <div>
-                    <Badge className="mb-2 bg-purple-500 text-white">📈 Performance History</Badge>
-                    <p className="text-sm text-muted-foreground">
-                      Track your analysis history and success rates. View statistics like total analyses, most used timeframes, bias distribution, and recent signals performance.
-                    </p>
-                  </div>
-                </div>
+                 <div className="flex items-start gap-3 p-3 rounded-lg bg-purple-500/10 border border-purple-500/30">
+                   <Clock className="w-5 h-5 text-purple-500 mt-0.5" />
+                   <div>
+                     <Badge className="mb-2 bg-purple-500 text-white">📈 Performance History</Badge>
+                     <p className="text-sm text-muted-foreground">
+                       Track your analysis history and success rates. View statistics like total analyses, most used timeframes, bias distribution, and recent signals performance.
+                     </p>
+                   </div>
+                 </div>
+                 
+                 <div className="flex items-start gap-3 p-3 rounded-lg bg-indigo-500/10 border border-indigo-500/30">
+                   <Activity className="w-5 h-5 text-indigo-500 mt-0.5" />
+                   <div>
+                     <Badge className="mb-2 bg-indigo-500 text-white">📊 Wyckoff Method</Badge>
+                     <p className="text-sm text-muted-foreground">
+                       <strong>🆕 New Update:</strong> Advanced Wyckoff analysis with adaptive criteria! Detects Accumulation/Distribution phases, key events (Spring, UpThrust), and provides specialized trade setups. Now works with smaller ranges and different timeframes.
+                     </p>
+                   </div>
+                 </div>
                 
                  <div className="flex items-start gap-3 p-3 rounded-lg bg-orange-500/10 border border-orange-500/30">
                    <Zap className="w-5 h-5 text-orange-500 mt-0.5" />
@@ -434,15 +444,27 @@ export const AboutModal: React.FC<AboutModalProps> = ({ isOpen, onClose }) => {
                  </ul>
                </div>
                
-               <div className="bg-muted/50 p-4 rounded-lg border-l-4 border-l-secondary">
-                 <h4 className="font-medium mb-2">🔔 Alert System Guide</h4>
-                 <ul className="space-y-2 text-sm text-muted-foreground">
-                   <li>• <strong>Critical Distance:</strong> Alerts trigger when price is within 0.5% of zone levels</li>
-                   <li>• <strong>Zone Status:</strong> Green = triggered, Blue = near (approaching), Gray = inactive</li>
-                   <li>• <strong>Toggle Control:</strong> Click the switch to enable/disable alerts for specific zones</li>
-                   <li>• <strong>Browser Notifications:</strong> Make sure to allow notifications for real-time alerts</li>
-                 </ul>
-               </div>
+                <div className="bg-muted/50 p-4 rounded-lg border-l-4 border-l-secondary">
+                  <h4 className="font-medium mb-2">🔔 Alert System Guide</h4>
+                  <ul className="space-y-2 text-sm text-muted-foreground">
+                    <li>• <strong>Critical Distance:</strong> Alerts trigger when price is within 0.5% of zone levels</li>
+                    <li>• <strong>Zone Status:</strong> Green = triggered, Blue = near (approaching), Gray = inactive</li>
+                    <li>• <strong>Toggle Control:</strong> Click the switch to enable/disable alerts for specific zones</li>
+                    <li>• <strong>Browser Notifications:</strong> Make sure to allow notifications for real-time alerts</li>
+                  </ul>
+                </div>
+                
+                <div className="bg-muted/50 p-4 rounded-lg border-l-4 border-l-indigo-500">
+                  <h4 className="font-medium mb-2">📊 Wyckoff Analysis Guide</h4>
+                  <ul className="space-y-2 text-sm text-muted-foreground">
+                    <li>• <strong>Adaptive Criteria:</strong> Analysis adapts to timeframe (15+ candles for 1m, 7+ for 1d)</li>
+                    <li>• <strong>Range Requirements:</strong> Minimum 0.5-2.5% volatility based on timeframe</li>
+                    <li>• <strong>Phase Detection:</strong> Identifies all 5 phases (A-E) with specific characteristics</li>
+                    <li>• <strong>Key Events:</strong> Detects Spring, UpThrust, SC, BC, LPS, LPSY</li>
+                    <li>• <strong>Best Usage:</strong> Most effective in sideways markets with sufficient volume</li>
+                    <li>• <strong>Debug Mode:</strong> Shows range formation progress and criteria status</li>
+                  </ul>
+                </div>
                
                <div className="p-3 rounded-lg bg-muted/30">
                  <p className="text-sm font-medium mb-1">💡 Pro Tips:</p>

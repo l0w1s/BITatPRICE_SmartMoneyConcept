@@ -35,12 +35,13 @@ export const BiasCard: React.FC<BiasCardProps> = ({ analysis }) => {
 
   const config = biasConfig[bias];
   const IconComponent = config.icon;
+  const isSideways = bias === 'SIDEWAYS';
 
   return (
     <Card className={`p-6 ${config.gradient} border-2 ${config.border}`}>
       <div className="text-center space-y-4">
         <div className="flex items-center justify-center gap-2">
-          <IconComponent className={`w-8 h-8 text-${config.color}`} />
+          <IconComponent className={`w-8 h-8 ${isSideways ? 'text-foreground' : `text-${config.color}`}`} />
           <h2 className="text-2xl font-bold text-foreground">
             MARKET BIAS ({timeframe.toUpperCase()})
           </h2>
@@ -48,7 +49,7 @@ export const BiasCard: React.FC<BiasCardProps> = ({ analysis }) => {
         
         <div className="space-y-2">
           <div className="flex items-center justify-center gap-3 flex-wrap">
-            <Badge variant="outline" className={`text-lg px-4 py-2 border-${config.color} text-${config.color}`}>
+            <Badge variant="outline" className={`text-lg px-4 py-2 ${isSideways ? 'border-foreground text-foreground' : `border-${config.color} text-${config.color}`}`}>
               {bias}
             </Badge>
             <Badge variant="secondary" className="text-sm">
@@ -64,7 +65,7 @@ export const BiasCard: React.FC<BiasCardProps> = ({ analysis }) => {
           
           {lastEvent && breakLevel && (
             <p className="text-sm text-muted-foreground">
-              Last event: <span className={`text-${config.color} font-semibold`}>
+              Last event: <span className={`${isSideways ? 'text-foreground' : `text-${config.color}`} font-semibold`}>
                 {lastEvent}
               </span> @ {formatPrice(breakLevel)}
             </p>

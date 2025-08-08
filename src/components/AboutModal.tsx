@@ -338,7 +338,7 @@ export const AboutModal: React.FC<AboutModalProps> = ({ isOpen, onClose }) => {
               <Clock className="w-5 h-5 text-primary mt-0.5" />
               <div className="space-y-2">
                 <p className="text-sm"><strong>Lower timeframes (15m-1h):</strong> Valid for 1-4 hours</p>
-                <p className="text-sm"><strong>Higher timeframes (4h-1d):</strong> Valid for 1-7 days</p>
+                <p className="text-sm"><strong>Mid timeframe (30m):</strong> Valid for 2-6 hours</p>
                 <p className="text-xs text-muted-foreground">
                   Signals lose validity when there's a break of identified structure or formation of new SMC patterns.
                 </p>

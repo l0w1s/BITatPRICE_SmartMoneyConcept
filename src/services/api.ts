@@ -12,8 +12,8 @@ export class BitcoinAPI {
   static async fetchCandles(timeframe: string): Promise<Candle[]> {
     const now = Date.now();
     const daysToFetchMap: Record<string, number> = { 
-      '15m': 5, 
-      '30m': 10, 
+      '15m': 10, 
+      '30m': 20, 
       '1h': 15, 
       '4h': 60, 
       '1d': 365 

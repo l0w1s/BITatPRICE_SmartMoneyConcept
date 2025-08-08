@@ -17,7 +17,7 @@ interface MultiTimeframeAnalysisProps {
   currentTimeframe: string;
 }
 
-const TIMEFRAMES = ['15m', '1h', '4h', '1d'];
+const TIMEFRAMES = ['15m', '30m', '1h', '4h', '1d'];
 
 export function MultiTimeframeAnalysis({ currentTimeframe }: MultiTimeframeAnalysisProps) {
   const [analyses, setAnalyses] = useState<TimeframeAnalysis[]>([]);
@@ -110,6 +110,16 @@ export function MultiTimeframeAnalysis({ currentTimeframe }: MultiTimeframeAnaly
   };
 
   const confluences = getConfluences();
+  const valid = analyses.filter(a => a.analysis);
+  const majorityBias = (() => {
+    const counts: Record<'bullish' | 'bearish', number> = { bullish: 0, bearish: 0 };
+    valid.forEach((v) => {
+      const b = (v.analysis as SMCAnalysis).bias.toLowerCase();
+      if (b === 'bullish' || b === 'bearish') counts[b as 'bullish' | 'bearish']++;
+    });
+    if (counts.bullish === counts.bearish) return 'neutral';
+    return counts.bullish > counts.bearish ? 'bullish' : 'bearish';
+  })();
 
   return (
     <Card>
@@ -145,6 +155,32 @@ export function MultiTimeframeAnalysis({ currentTimeframe }: MultiTimeframeAnaly
                 {confluence.type === 'bullish' ? '🟢' : '🔴'} {confluence.count} TFs {confluence.strength}
               </Badge>
             ))}
+          </div>
+        )}
+
+        {valid.length >= 2 && (
+          <div className="p-3 rounded-lg border">
+            <h4 className="font-medium mb-2">🧭 Consistency Report</h4>
+            <div className="text-xs text-muted-foreground mb-2">
+              Majority bias: <span className="font-medium">{majorityBias.toUpperCase()}</span>
+            </div>
+            <div className="space-y-1">
+              {analyses.filter(a => a.analysis).map((tf) => {
+                const bias = (tf.analysis as SMCAnalysis).bias.toLowerCase();
+                const aligned = majorityBias !== 'neutral' && bias === majorityBias;
+                return (
+                  <div key={tf.timeframe} className="flex items-center justify-between text-xs">
+                    <div className="flex items-center gap-2">
+                      <span className="font-medium">{tf.timeframe}</span>
+                      <Badge variant={getBiasColor(bias) as any} className="text-xs">{bias}</Badge>
+                    </div>
+                    <Badge variant={aligned ? 'default' : 'outline'} className="text-xs">
+                      {aligned ? 'Aligned' : 'Divergent'}
+                    </Badge>
+                  </div>
+                );
+              })}
+            </div>
           </div>
         )}
 

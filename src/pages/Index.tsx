@@ -111,23 +111,21 @@ const Index = () => {
       
       <div className="relative max-w-6xl mx-auto p-4 space-y-6">
         {/* Header */}
-        <header className="text-center space-y-4">
-          <div className="flex items-center justify-center gap-3">
+        <header className="space-y-4 text-center md:text-left">
+          <div className="flex items-center justify-center md:justify-start gap-3">
             <BitcoinIcon className="w-12 h-12 text-primary" />
             <h1 className="text-4xl md:text-6xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
               Sir BAP AI
             </h1>
           </div>
-          <p className="text-muted-foreground text-lg">
+          <p className="text-muted-foreground text-lg max-w-2xl mx-auto md:mx-0">
             Smart Money Concepts Analysis for Bitcoin (BTC)
           </p>
-          <div className="flex justify-center gap-2">
+          <div className="flex justify-center md:justify-start gap-2">
             <Badge variant="outline" className="text-primary border-primary">
               SMC v2.3
             </Badge>
-            <Badge variant="secondary">
-              Live Data
-            </Badge>
+            <Badge variant="secondary">Live Data</Badge>
           </div>
         </header>
 
@@ -138,50 +136,54 @@ const Index = () => {
 
         {/* Controls */}
         <Card className="p-6 bg-gradient-to-r from-card to-background border border-border">
-          <div className="flex flex-col items-center justify-center gap-6">
-            <div className="flex flex-col md:flex-row items-center gap-6">
-              <div className="text-center space-y-2">
-                <label className="text-sm font-medium text-muted-foreground">
-                  Select Timeframe
-                </label>
-                <Select value={timeframe} onValueChange={setTimeframe}>
-                  <SelectTrigger className="w-48">
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="15m">15 Minutes</SelectItem>
-                    <SelectItem value="30m">30 Minutes</SelectItem>
-                    <SelectItem value="1h">1 Hour</SelectItem>
-                    <SelectItem value="4h">4 Hours</SelectItem>
-                    <SelectItem value="1d">Daily</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-              
-              <Button onClick={handleAnalyze} disabled={loading} size="lg" className="px-8">
-                {loading ? (
-                  <>
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                    Analyzing Market...
-                  </>
-                ) : (
-                  <>
-                    <Activity className="mr-2 h-4 w-4" />
-                    Update Analysis
-                  </>
-                )}
-              </Button>
+          <div className="flex flex-col gap-6 md:gap-4">
+            <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6">
+              <div className="flex flex-col md:flex-row md:items-end gap-6">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium text-muted-foreground">
+                    Select Timeframe
+                  </label>
+                  <Select value={timeframe} onValueChange={setTimeframe}>
+                    <SelectTrigger className="w-40 md:w-48">
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="15m">15 Minutes</SelectItem>
+                      <SelectItem value="30m">30 Minutes</SelectItem>
+                      <SelectItem value="1h">1 Hour</SelectItem>
+                      <SelectItem value="4h">4 Hours</SelectItem>
+                      <SelectItem value="1d">Daily</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                
+                <Button onClick={handleAnalyze} disabled={loading} size="lg" className="px-8">
+                  {loading ? (
+                    <>
+                      <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                      Analyzing Market...
+                    </>
+                  ) : (
+                    <>
+                      <Activity className="mr-2 h-4 w-4" />
+                      Update Analysis
+                    </>
+                  )}
+                </Button>
 
-              <SettingsModal onSettingsChange={handleSettingsChange} />
-            
-              {settings.autoRefresh && (
-                <Badge variant="secondary" className="text-xs">
-                  🔄 Auto: {settings.refreshInterval}s
-                </Badge>
-              )}
+                <SettingsModal onSettingsChange={handleSettingsChange} />
+              </div>
+
+              <div className="flex items-center gap-3 md:justify-end">
+                {settings.autoRefresh && (
+                  <Badge variant="secondary" className="text-xs">
+                    🔄 Auto: {settings.refreshInterval}s
+                  </Badge>
+                )}
+              </div>
             </div>
-            
-            <p className="text-xs text-muted-foreground text-center">
+
+            <p className="text-xs text-muted-foreground text-center md:text-right">
               📊 Real-time data powered by <span className="font-semibold">Hyperliquid</span>
             </p>
           </div>

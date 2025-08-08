@@ -400,6 +400,32 @@ export const AboutModal: React.FC<AboutModalProps> = ({ isOpen, onClose }) => {
                      <p className="text-sm text-muted-foreground">
                        <strong>🆕 New Update:</strong> Advanced Wyckoff analysis with adaptive criteria! Detects Accumulation/Distribution phases, key events (Spring, UpThrust), and provides specialized trade setups. Now works with smaller ranges and different timeframes.
                      </p>
+
+                     <div className="mt-3 space-y-2 text-sm text-muted-foreground">
+                       <p className="font-medium text-foreground">Phase Detection (A–E)</p>
+                       <ul className="list-disc pl-5 space-y-1">
+                         <li><strong>Phase A:</strong> Stopping action do movimento anterior. Marca <em>SC</em> (Selling Climax) e <em>AR</em> (Automatic Rally) em Acumulação, ou <em>BC</em> (Buying Climax) e <em>AR</em> em Distribuição. Primeiras <em>ST</em> (Secondary Tests) definem a faixa.</li>
+                         <li><strong>Phase B:</strong> Construção de causa. Preço oscila dentro da faixa para absorver oferta/demanda. Múltiplos <em>ST</em> e falsos rompimentos podem ocorrer.</li>
+                         <li><strong>Phase C:</strong> Teste decisivo. Em Acumulação surge o <em>Spring</em> (falso rompimento abaixo) com retorno rápido; em Distribuição, o <em>UpThrust</em> (ou <em>UTAD</em>) acima da faixa.</li>
+                         <li><strong>Phase D:</strong> Confirmação. Após o Spring, aparecem <em>SOS</em> (Sign of Strength) e <em>LPS</em> (Last Point of Support). Na Distribuição, <em>SOW</em> (Sign of Weakness) e <em>LPSY</em> (Last Point of Supply).</li>
+                         <li><strong>Phase E:</strong> Tendência efetiva. <em>Markup</em> após SOS (Acumulação) ou <em>Markdown</em> após SOW (Distribuição).</li>
+                       </ul>
+
+                       <p className="font-medium text-foreground">Key Events Detectados</p>
+                       <ul className="list-disc pl-5 space-y-1">
+                         <li><strong>SC (Selling Climax):</strong> Ponto de exaustão vendedora com forte reacção.</li>
+                         <li><strong>BC (Buying Climax):</strong> Exaustão compradora com rejeição acentuada.</li>
+                         <li><strong>AR (Automatic Rally/Reaction):</strong> Contra‑movimento automático que ajuda a definir a faixa.</li>
+                         <li><strong>ST (Secondary Test):</strong> Retestes de SC/BC para validar oferta/demanda remanescente.</li>
+                         <li><strong>Spring / Test:</strong> Falso rompimento abaixo da faixa com retorno rápido; o Test confirma (volume/espalhamento).</li>
+                         <li><strong>UpThrust / UTAD:</strong> Falso rompimento acima da faixa; UTAD é a variante tardia.</li>
+                         <li><strong>LPS:</strong> Último ponto de suporte antes do avanço (Acumulação).</li>
+                         <li><strong>LPSY:</strong> Último ponto de oferta antes da queda (Distribuição).</li>
+                         <li><strong>SOS / SOW:</strong> Sinal de força (alta) ou fraqueza (baixa) após o evento chave.</li>
+                       </ul>
+
+                       <p className="text-xs">Critérios adaptativos por timeframe e volatilidade para evitar falsos positivos e melhorar a robustez dos sinais.</p>
+                     </div>
                    </div>
                  </div>
                 

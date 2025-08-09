@@ -370,7 +370,7 @@ export class SMCAnalyzer {
           strength: this._calculateZoneStrength(candle, currentPrice, candles, i),
           age: this._calculateAge(i, candles.length),
           distance: Math.abs(currentPrice - (candle.h + candle.l) / 2) / currentPrice * 100,
-          tested: this._isZoneTested(candle, candles, i),
+          tested: this._isZoneTested(candle, candles, i, 'demand'),
           formationIndex: i
         };
         demandZones.push(zone);
@@ -388,7 +388,7 @@ export class SMCAnalyzer {
           strength: this._calculateZoneStrength(candle, currentPrice, candles, i),
           age: this._calculateAge(i, candles.length),
           distance: Math.abs(currentPrice - (candle.h + candle.l) / 2) / currentPrice * 100,
-          tested: this._isZoneTested(candle, candles, i),
+          tested: this._isZoneTested(candle, candles, i, 'supply'),
           formationIndex: i
         };
         supplyZones.push(zone);
@@ -521,7 +521,7 @@ export class SMCAnalyzer {
     return 'OLD';
   }
   
-  private static _isZoneTested(zone: Candle, candles: Candle[], formationIndex: number): boolean {
+  private static _isZoneTested(zone: Candle, candles: Candle[], formationIndex: number, zoneType: 'demand' | 'supply'): boolean {
     const settings = getSettings();
     const profile = settings.tradingProfile;
     
@@ -567,9 +567,9 @@ export class SMCAnalyzer {
             let hasReaction = false;
             for (let j = 1; j <= minReactionCandles && i + j < candles.length; j++) {
               const nextCandle = candles[i + j];
-              // For demand zones, look for bullish reaction; for supply zones, bearish reaction
-              if ((zone.l < zone.h && nextCandle.c > nextCandle.o) || 
-                  (zone.l > zone.h && nextCandle.c < nextCandle.o)) {
+              // Demand: bullish reaction; Supply: bearish reaction
+              if ((zoneType === 'demand' && nextCandle.c > nextCandle.o) ||
+                  (zoneType === 'supply' && nextCandle.c < nextCandle.o)) {
                 hasReaction = true;
                 break;
               }

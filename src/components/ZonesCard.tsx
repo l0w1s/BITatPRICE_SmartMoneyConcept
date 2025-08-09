@@ -110,11 +110,15 @@ export const ZonesCard: React.FC<ZonesCardProps> = ({ analysis }) => {
           📍 Multiple zones ranked by strength and proximity
         </div>
       </div>
-      <div className="grid grid-cols-1 gap-4 md:grid-cols-2 xl:grid-cols-4">
-        <ZoneSection title="Demand Zones" zones={demandZones} type="bullish" />
-        <ZoneSection title="Supply Zones" zones={supplyZones} type="bearish" />
-        <ZoneSection title="Bullish FVGs" zones={bullishFVGs} type="bullish" />
-        <ZoneSection title="Bearish FVGs" zones={bearishFVGs} type="bearish" />
+      <div className="space-y-4">
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <ZoneSection title="Demand Zones" zones={demandZones} type="bullish" />
+          <ZoneSection title="Supply Zones" zones={supplyZones} type="bearish" />
+        </div>
+        <div className="grid grid-cols-1 gap-4 md:grid-cols-2">
+          <ZoneSection title="Bullish FVGs" zones={bullishFVGs} type="bullish" />
+          <ZoneSection title="Bearish FVGs" zones={bearishFVGs} type="bearish" />
+        </div>
       </div>
     </Card>
   );

@@ -224,12 +224,7 @@ const Index = () => {
           <div className="space-y-6">
             <BiasCard analysis={analysis} />
 
-            <div className="grid gap-6 lg:grid-cols-2">
-              <ZonesCard analysis={analysis} />
-              <div className="space-y-6">
-                {/* FVGs can be added here when implemented */}
-              </div>
-            </div>
+            <ZonesCard analysis={analysis} />
 
             {/* Wyckoff Analysis for Sideways Markets */}
             {analysis.wyckoffAnalysis && (

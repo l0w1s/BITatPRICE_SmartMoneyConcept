@@ -111,17 +111,17 @@ const Index = () => {
       
       <div className="relative max-w-6xl mx-auto p-4 space-y-6">
         {/* Header */}
-        <header className="space-y-4 text-center md:text-left">
-          <div className="flex items-center justify-center md:justify-start gap-3">
+        <header className="space-y-4 text-center">
+          <div className="flex items-center justify-center gap-3">
             <BitcoinIcon className="w-12 h-12 text-primary" />
             <h1 className="text-4xl md:text-6xl font-bold bg-gradient-to-r from-primary to-primary/70 bg-clip-text text-transparent">
               Sir BAP AI
             </h1>
           </div>
-          <p className="text-muted-foreground text-lg max-w-2xl mx-auto md:mx-0">
+          <p className="text-muted-foreground text-lg max-w-2xl mx-auto">
             Smart Money Concepts Analysis for Bitcoin (BTC)
           </p>
-          <div className="flex justify-center md:justify-start gap-2">
+          <div className="flex justify-center gap-2">
             <Badge variant="outline" className="text-primary border-primary">
               SMC v2.3
             </Badge>
@@ -137,8 +137,8 @@ const Index = () => {
         {/* Controls */}
         <Card className="p-6 bg-gradient-to-r from-card to-background border border-border">
           <div className="flex flex-col gap-6 md:gap-4">
-            <div className="flex flex-col md:flex-row md:items-end md:justify-between gap-6">
-              <div className="flex flex-col md:flex-row md:items-end gap-6">
+            <div className="flex flex-col gap-6">
+              <div className="flex flex-col md:flex-row md:items-center md:justify-center gap-6">
                 <div className="space-y-2">
                   <label className="text-sm font-medium text-muted-foreground">
                     Select Timeframe
@@ -174,7 +174,7 @@ const Index = () => {
                 <SettingsModal onSettingsChange={handleSettingsChange} />
               </div>
 
-              <div className="flex items-center gap-3 md:justify-end">
+              <div className="flex items-center justify-center gap-3">
                 {settings.autoRefresh && (
                   <Badge variant="secondary" className="text-xs">
                     🔄 Auto: {settings.refreshInterval}s
@@ -183,7 +183,7 @@ const Index = () => {
               </div>
             </div>
 
-            <p className="text-xs text-muted-foreground text-center md:text-right">
+            <p className="text-xs text-muted-foreground text-center">
               📊 Real-time data powered by <span className="font-semibold">Hyperliquid</span>
             </p>
           </div>
